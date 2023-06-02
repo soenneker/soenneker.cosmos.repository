@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net7.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <Platforms>AnyCPU</Platforms>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Description>A data persistence abstraction layer for Cosmos DB</Description>
+        <Version Condition="'$(BUILD_VERSION)' == ''">1.0.0</Version>
+        <Version Condition="'$(BUILD_VERSION)' != ''">$(BUILD_VERSION)</Version>
+        <AssemblyName>Soenneker.Cosmos.Repository</AssemblyName>
+        <PackageId>Soenneker.Cosmos.Repository</PackageId>
+        <PackageTags>cosmos db repository c# .net dotnet</PackageTags>
+        <Copyright>Copyright © 2023 Jake Soenneker</Copyright>
+        <Authors>Jake Soenneker</Authors>
+        <Company>https://soenneker.com</Company>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <IsPackable>true</IsPackable>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/soenneker/soenneker.cosmos.repository</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/soenneker/soenneker.cosmos.repository</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <LangVersion>latest</LangVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+        <None Include="..\icon.png" Pack="true" PackagePath="\" />
+        <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.2.0" />
+
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+
+        <PackageReference Include="Soenneker.Constants.Data" Version="1.0.5" />
+
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="1.0.73" />
+
+        <PackageReference Include="Soenneker.Documents.Audit" Version="1.0.1" />
+
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="1.0.5" />
+
+        <PackageReference Include="Soenneker.Enums.EventType" Version="1.0.27" />
+
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="1.0.44" />
+
+        <PackageReference Include="Soenneker.Utils.Cancellation" Version="1.0.18" />
+
+        <PackageReference Include="Soenneker.Utils.Json" Version="1.0.74" />
+
+        <PackageReference Include="Soenneker.Utils.Method" Version="1.0.27" />
+
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="1.0.67" />
+    </ItemGroup>
+</Project>
