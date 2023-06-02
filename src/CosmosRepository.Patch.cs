@@ -20,10 +20,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await PatchItem(item.Id, operations, useQueue).ConfigureAwait(false);
+            _ = await PatchItem(item.Id, operations, useQueue);
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).ConfigureAwait(false);
+                await Task.Delay(timespanDelay!.Value);
         }
 
         return documents;
@@ -45,17 +45,17 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async _ =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+                Microsoft.Azure.Cosmos.Container container = await Container;
 
-                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, _).ConfigureAwait(false);
+                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, _);
                 //Logger.LogInformation(response.RequestCharge.ToString());
             });
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await Container;
 
-            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations).ConfigureAwait(false);
+            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations);
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }

@@ -17,18 +17,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> queryable = await BuildQueryable();
         queryable = queryable.Select(d => d);
 
-        List<TDocument> results = await GetItems(queryable, delayMs).ConfigureAwait(false);
+        List<TDocument> results = await GetItems(queryable, delayMs);
         return results;
     }
 
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> documentIds)
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
         query = query.Where(b => documentIds.Contains(b.DocumentId));
-        List<TDocument> docs = await GetItems(query).ConfigureAwait(false);
+        List<TDocument> docs = await GetItems(query);
         return docs;
     }
 
@@ -54,18 +54,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<T>> GetItems<T, TResponse>(ODataQueryOptions odataOptions)
     {
-        IQueryable<TResponse> queryable = await BuildQueryable<TResponse>().ConfigureAwait(false);
+        IQueryable<TResponse> queryable = await BuildQueryable<TResponse>();
 
-        List<T> result = await GetItems<T, TResponse>(odataOptions, queryable).ConfigureAwait(false);
+        List<T> result = await GetItems<T, TResponse>(odataOptions, queryable);
 
         return result;
     }
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> queryable = await BuildQueryable();
 
-        List<IdPartitionPair> results = await GetIds(queryable, delayMs).ConfigureAwait(false);
+        List<IdPartitionPair> results = await GetIds(queryable, delayMs);
 
         return results;
     }
@@ -79,9 +79,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> queryable = await BuildQueryable();
 
-        List<string> results = await GetPartitionKeys(queryable, delayMs).ConfigureAwait(false);
+        List<string> results = await GetPartitionKeys(queryable, delayMs);
 
         return results;
     }
@@ -118,7 +118,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (delayMs != null)
             timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
 
-        Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+        Microsoft.Azure.Cosmos.Container container = await Container;
 
         using FeedIterator<T> iterator = container.GetItemQueryIterator<T>(queryDefinition);
 
@@ -128,12 +128,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         while (iterator.HasMoreResults)
         {
-            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
 
             results.AddRange(response.ToList()); // TODO: I wonder if this is faster than foreach (response.Resource)
 
             if (delayMs != null)
-                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken);
         }
 
         return results;
@@ -141,10 +141,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null)
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
         query = query.Where(c => c.CreatedAt >= startAt && c.CreatedAt <= endAt);
 
-        List<TDocument> items = await GetItems(query, delayMs).ConfigureAwait(false);
+        List<TDocument> items = await GetItems(query, delayMs);
 
         return items;
     }

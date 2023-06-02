@@ -20,7 +20,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(queryable).ConfigureAwait(false);
+            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(queryable);
 
             continuationToken = newContinuationToken;
 
@@ -34,11 +34,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken).ConfigureAwait(false);
+            (List<TDocument>? docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken);
 
             continuationToken = newContinuationToken;
 
-            await resultTask(docs).ConfigureAwait(false);
+            await resultTask(docs);
         } while (continuationToken != null);
     }
 
@@ -48,11 +48,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken).ConfigureAwait(false);
+            (List<TDocument>? docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken);
 
             continuationToken = newContinuationToken;
 
-            await resultTask(docs).ConfigureAwait(false);
+            await resultTask(docs);
         } while (continuationToken != null);
     }
 }

@@ -14,7 +14,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
 
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize).ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize);
         query = query.OrderBy(c => c.CreatedAt);
 
         var newQuery = query.Select(c => new { c.DocumentId, c.PartitionKey });
@@ -25,7 +25,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (var result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).ConfigureAwait(false);
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue);
             }
         });
 
@@ -42,7 +42,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (TDocument result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).ConfigureAwait(false);
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue);
             }
         });
 

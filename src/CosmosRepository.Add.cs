@@ -37,10 +37,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            item.Id = await InternalAddItem(item, useQueue, excludeResponse).ConfigureAwait(false);
+            item.Id = await InternalAddItem(item, useQueue, excludeResponse);
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).ConfigureAwait(false);
+                await Task.Delay(timespanDelay!.Value);
         }
 
         return documents;
@@ -60,20 +60,20 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async _ =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+                Microsoft.Azure.Cosmos.Container container = await Container;
 
-                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, _).ConfigureAwait(false);
-            }).ConfigureAwait(false);
+                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, _);
+            });
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await Container;
 
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options).ConfigureAwait(false);
+            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options);
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Create, document.Id, document).ConfigureAwait(false);
+            await CreateAuditItem(EventType.Create, document.Id, document);
 
         return document.Id;
     }

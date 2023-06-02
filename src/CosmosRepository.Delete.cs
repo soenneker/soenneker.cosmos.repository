@@ -25,9 +25,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
         
-        List<IdPartitionPair> ids = await GetAllIds().ConfigureAwait(false);
+        List<IdPartitionPair> ids = await GetAllIds();
 
-        await DeleteIds(ids, delayMs, useQueue).ConfigureAwait(false);
+        await DeleteIds(ids, delayMs, useQueue);
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
@@ -37,9 +37,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (_log)
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
-        List<IdPartitionPair> ids = await GetIds(queryable).ConfigureAwait(false);
+        List<IdPartitionPair> ids = await GetIds(queryable);
 
-        await DeleteIds(ids, delayMs, useQueue).ConfigureAwait(false);
+        await DeleteIds(ids, delayMs, useQueue);
     }
 
     public virtual async ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false)
@@ -54,10 +54,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (IdPartitionPair id in ids)
         {
-            await DeleteItem(id.Id, id.PartitionKey, useQueue).ConfigureAwait(false);
+            await DeleteItem(id.Id, id.PartitionKey, useQueue);
 
             if (delayMs != null)
-                await Task.Delay(timeSpanDelay!.Value).ConfigureAwait(false);
+                await Task.Delay(timeSpanDelay!.Value);
         }
 
         if (_log)
@@ -75,21 +75,21 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async _ =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+                Microsoft.Azure.Cosmos.Container container = await Container;
 
-                await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, _).ConfigureAwait(false);
-            }).ConfigureAwait(false);
+                await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, _);
+            });
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await Container;
 
-            _ = await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions).ConfigureAwait(false);
+            _ = await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions);
         }
 
         string entityId = documentId.AddPartitionKey(partitionKey);
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Delete, entityId).ConfigureAwait(false);
+            await CreateAuditItem(EventType.Delete, entityId);
     }
 }

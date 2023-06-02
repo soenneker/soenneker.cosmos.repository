@@ -16,7 +16,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        TDocument? doc = await GetItem(documentId, partitionKey).ConfigureAwait(false);
+        TDocument? doc = await GetItem(documentId, partitionKey);
 
         bool result = doc != null;
         return result;
@@ -24,12 +24,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> GetExistsByPartitionKey(string partitionKey)
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
 
         query = query.Where(c => c.PartitionKey == partitionKey);
         IQueryable<string> newQuery = query.Select(c => c.Id);
 
-        string? docId = await GetItem(newQuery).ConfigureAwait(false);
+        string? docId = await GetItem(newQuery);
 
         bool result = docId != null;
         return result;
@@ -44,10 +44,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey)
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
         query = query.Where(c => c.PartitionKey == partitionKey);
 
-        TDocument? doc = await GetItem(query).ConfigureAwait(false);
+        TDocument? doc = await GetItem(query);
 
         return doc;
     }
@@ -65,10 +65,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             CancellationToken cancellationToken = _cancellationUtil.Get();
 
-            Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await Container;
 
             ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+                cancellationToken: cancellationToken);
 
             TDocument? doc = response.Resource;
             return doc;
@@ -81,22 +81,22 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<TDocument?> GetFirst()
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
         query = query.OrderBy(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query).ConfigureAwait(false);
+        TDocument? doc = await GetItem(query);
 
         return doc;
     }
 
     public async ValueTask<TDocument?> GetLast()
     {
-        IQueryable<TDocument> query = await BuildQueryable().ConfigureAwait(false);
+        IQueryable<TDocument> query = await BuildQueryable();
         query = query.OrderByDescending(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query).ConfigureAwait(false);
+        TDocument? doc = await GetItem(query);
 
         return doc;
     }

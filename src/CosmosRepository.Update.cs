@@ -28,10 +28,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse).ConfigureAwait(false);
+            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse);
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).ConfigureAwait(false);
+                await Task.Delay(timespanDelay!.Value);
         }
 
         return documents;
@@ -59,23 +59,23 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async _ =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+                Microsoft.Azure.Cosmos.Container container = await Container;
 
-                ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, _).ConfigureAwait(false);
+                ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, _);
                 //Logger.LogInformation(response.RequestCharge.ToString());
             });
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await Container;
 
-            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options).ConfigureAwait(false);
+            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options);
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Update, id, item).ConfigureAwait(false);
+            await CreateAuditItem(EventType.Update, id, item);
 
         if (updatedDocument == null)
             return item;

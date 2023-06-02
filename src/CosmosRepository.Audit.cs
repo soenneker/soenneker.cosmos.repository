@@ -48,9 +48,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         ValueTask result = _backgroundQueue.QueueValueTask(async _ =>
         {
-            Microsoft.Azure.Cosmos.Container container = await AuditContainer.ConfigureAwait(false);
+            Microsoft.Azure.Cosmos.Container container = await AuditContainer;
 
-           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, _).ConfigureAwait(false);
+           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, _);
         });
 
         return result;

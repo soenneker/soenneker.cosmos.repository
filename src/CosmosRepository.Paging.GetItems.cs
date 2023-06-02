@@ -15,12 +15,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null)
     {
-        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken).ConfigureAwait(false);
+        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken);
 
         // required for paging
         queryable = queryable.OrderBy(c => c.CreatedAt);
 
-        (List<TDocument>, string?) result = await GetItemsPaged(queryable).ConfigureAwait(false);
+        (List<TDocument>, string?) result = await GetItemsPaged(queryable);
 
         return result;
     }
@@ -40,13 +40,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             MaxItemCount = pageSize
         };
 
-        Microsoft.Azure.Cosmos.Container container = await Container.ConfigureAwait(false);
+        Microsoft.Azure.Cosmos.Container container = await Container;
 
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
 
         CancellationToken? cancellationToken = _cancellationUtil.Get();
 
-        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken.GetValueOrDefault()).ConfigureAwait(false);
+        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken.GetValueOrDefault());
 
         List<TDocument> results = response.ToList();
 
@@ -62,7 +62,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         CancellationToken cancellationToken = _cancellationUtil.Get();
 
-        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
 
         List<T> results = response.ToList();
 
