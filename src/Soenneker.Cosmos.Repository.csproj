@@ -50,7 +50,7 @@
 
         <PackageReference Include="Soenneker.Enums.EventType" Version="1.0.40" />
 
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="1.0.83" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="1.0.90" />
 
         <PackageReference Include="Soenneker.Utils.Cancellation" Version="1.0.35" />
 
