@@ -46,7 +46,7 @@
 
         <PackageReference Include="Soenneker.Documents.Audit" Version="1.0.68" />
 
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="1.0.26" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="1.0.27" />
 
         <PackageReference Include="Soenneker.Enums.EventType" Version="1.0.49" />
 
