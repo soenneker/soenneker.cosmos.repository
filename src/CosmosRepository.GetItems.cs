@@ -24,6 +24,15 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return results;
     }
 
+    public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null)
+    {
+        IQueryable<TDocument> queryable = await BuildQueryable();
+        queryable = queryable.Where(c => c.PartitionKey == partitionKey);
+
+        List<TDocument> results = await GetItems(queryable, delayMs);
+        return results;
+    }
+
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> documentIds)
     {
         IQueryable<TDocument> query = await BuildQueryable();

@@ -18,6 +18,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<TDocument>> GetAll(double? delayMs = null);
 
     /// <summary>
+    /// Careful, could be heavy. You may want <see cref="GetAllPaged"/> if the number of items are large (due to app memory limitations)
+    /// </summary>
+    [Pure]
+    ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null);
+
+    /// <summary>
     /// Get items given a string SQL query directly. Typically should avoid (use specification, parameterization concerns, etc)
     /// </summary>
     [Pure]
