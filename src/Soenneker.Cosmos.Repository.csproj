@@ -46,7 +46,7 @@
 
         <PackageReference Include="Soenneker.Documents.Audit" Version="1.0.151" />
 
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="1.0.52" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="1.0.53" />
 
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="1.0.253" />
 
