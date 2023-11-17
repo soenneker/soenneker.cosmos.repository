@@ -40,21 +40,21 @@
 
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 
-        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.4" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.5" />
 
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.7" />
 
-        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.9" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.13" />
 
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.3" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.5" />
 
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.0.302" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.16" />
 
         <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.6" />
 
-        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.7" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.12" />
 
-        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.3" />
+        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.5" />
 
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.5" />
     </ItemGroup>
