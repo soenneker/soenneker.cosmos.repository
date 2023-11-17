@@ -40,13 +40,13 @@
 
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 
-        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.7" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.8" />
 
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.17" />
 
         <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.17" />
 
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.6" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.7" />
 
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.22" />
 
