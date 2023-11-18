@@ -40,22 +40,22 @@
 
         
 
-        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.8" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.12" />
 
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.17" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.32" />
 
-        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.17" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.27" />
 
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.7" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.10" />
 
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.27" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.40" />
 
-        <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.9" />
+        <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.13" />
 
-        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.18" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.31" />
 
-        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.6" />
+        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.11" />
 
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.13" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.27" />
     </ItemGroup>
 </Project>
