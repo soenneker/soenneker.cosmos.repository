@@ -50,7 +50,7 @@
 
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.170" />
 
-        <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.40" />
+        <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.41" />
 
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.159" />
 
