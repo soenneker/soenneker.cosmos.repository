@@ -8,5 +8,5 @@
 ## Installation
 
 ```
-Install-Package Soenneker.Cosmos.Repository
+dotnet add package Soenneker.Cosmos.Repository
 ```
