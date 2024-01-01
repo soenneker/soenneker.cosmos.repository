@@ -5,6 +5,8 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
@@ -20,10 +22,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await PatchItem(item.Id, operations, useQueue);
+            _ = await PatchItem(item.Id, operations, useQueue).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value);
+                await Task.Delay(timespanDelay!.Value).NoSync();
         }
 
         return documents;
@@ -43,19 +45,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         // TODO: we should probably move this to replace
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async _ =>
+            await _backgroundQueue.QueueValueTask(async cancellationToken =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container;
+                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, _);
+                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, cancellationToken).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
-            });
+            }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container;
+            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations);
+            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations).NoSync();
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }

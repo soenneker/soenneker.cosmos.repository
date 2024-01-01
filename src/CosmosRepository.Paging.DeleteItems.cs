@@ -4,6 +4,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Constants.Data;
 using Soenneker.Documents.Document;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
@@ -14,7 +15,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
 
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize);
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize).NoSync();
         query = query.OrderBy(c => c.CreatedAt);
 
         var newQuery = query.Select(c => new { c.DocumentId, c.PartitionKey });
@@ -25,9 +26,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (var result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue);
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).NoSync();
             }
-        });
+        }).NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
@@ -42,9 +43,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (TDocument result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue);
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).NoSync();
             }
-        });
+        }).NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }

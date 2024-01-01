@@ -24,7 +24,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
 
     /// <summary>
     /// Returns an empty queryable that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
-    /// Be sure to order in your query. Leverage <see cref="QueryableExtension.ToOrdered{IQueryable}"/>
+    /// Be sure to order in your query. Leverage QueryableExtension.ToOrdered{IQueryable}/>
     /// </summary>
     [Pure]
     ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null);

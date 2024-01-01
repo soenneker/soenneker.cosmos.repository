@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
@@ -23,7 +25,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<IQueryable<T>> BuildQueryable<T>()
     {
-        Microsoft.Azure.Cosmos.Container container = await Container;
+        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
         IOrderedQueryable<T> result = container.GetItemLinqQueryable<T>();
         return result;
     }
@@ -40,7 +42,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             MaxItemCount = pageSize
         };
 
-        Microsoft.Azure.Cosmos.Container container = await Container;
+        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
         IOrderedQueryable<T> queryable = container.GetItemLinqQueryable<T>(continuationToken: continuationToken, requestOptions: requestOptions);
         
@@ -49,9 +51,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<int> Count()
     {
-        IQueryable<TDocument> query = await BuildQueryable();
+        IQueryable<TDocument> query = await BuildQueryable().NoSync();
 
-        int result = await Count(query);
+        int result = await Count(query).NoSync();
         return result;
     }
 
@@ -59,7 +61,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         CancellationToken cancellationToken = _cancellationUtil.Get();
 
-        Response<int>? response = await query.CountAsync(cancellationToken: cancellationToken);
+        Response<int>? response = await query.CountAsync(cancellationToken: cancellationToken).NoSync();
 
         int result = response.Resource;
         return result;
@@ -68,19 +70,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public async ValueTask<bool> Any()
     {
         // TODO: there probably is a better way to do this than counting
-        int count = await Count();
+        int count = await Count().NoSync();
         return count != 0;
     }
 
     public async ValueTask<bool> None()
     {
-        bool result = !await Any();
+        bool result = !await Any().NoSync();
         return result;
     }
 
     public async ValueTask<T?> GetItem<T>(IQueryable<T> queryable)
     {
-        List<T> items = await GetItems(queryable);
+        List<T> items = await GetItems(queryable).NoSync();
 
         T? result = items.FirstOrDefault();
         return result;
@@ -103,12 +105,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         while (iterator.HasMoreResults)
         {
-            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
+            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
             results.AddRange(response.ToList());
 
             if (delayMs != null)
-                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken);
+                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken).NoSync();
         }
 
         return results;

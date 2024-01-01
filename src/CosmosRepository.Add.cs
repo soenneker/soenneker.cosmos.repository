@@ -7,6 +7,8 @@ using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 
@@ -25,7 +27,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return InternalAddItem(document, useQueue, excludeResponse);
     }
 
-    public async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false)
+    public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false)
     {
         if (_log)
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
@@ -37,10 +39,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            item.Id = await InternalAddItem(item, useQueue, excludeResponse);
+            item.Id = await InternalAddItem(item, useQueue, excludeResponse).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value);
+                await Task.Delay(timespanDelay!.Value).NoSync();
         }
 
         return documents;
@@ -58,22 +60,22 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async _ =>
+            await _backgroundQueue.QueueValueTask(async cancellationToken =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container;
+                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, _);
-            });
+                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
+            }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container;
+            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options);
+            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options).NoSync();
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Create, document.Id, document);
+            await CreateAuditItem(EventType.Create, document.Id, document).NoSync();
 
         return document.Id;
     }

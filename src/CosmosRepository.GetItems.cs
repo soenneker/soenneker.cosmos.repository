@@ -9,6 +9,8 @@ using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Logging;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdPartitionPair;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
@@ -17,27 +19,27 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable();
+        IQueryable<TDocument> queryable = await BuildQueryable().NoSync();
         queryable = queryable.Select(d => d);
 
-        List<TDocument> results = await GetItems(queryable, delayMs);
+        List<TDocument> results = await GetItems(queryable, delayMs).NoSync();
         return results;
     }
 
     public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable();
+        IQueryable<TDocument> queryable = await BuildQueryable().NoSync();
         queryable = queryable.Where(c => c.PartitionKey == partitionKey);
 
-        List<TDocument> results = await GetItems(queryable, delayMs);
+        List<TDocument> results = await GetItems(queryable, delayMs).NoSync();
         return results;
     }
 
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> documentIds)
     {
-        IQueryable<TDocument> query = await BuildQueryable();
+        IQueryable<TDocument> query = await BuildQueryable().NoSync();
         query = query.Where(b => documentIds.Contains(b.DocumentId));
-        List<TDocument> docs = await GetItems(query);
+        List<TDocument> docs = await GetItems(query).NoSync();
         return docs;
     }
 
@@ -63,18 +65,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<T>> GetItems<T, TResponse>(ODataQueryOptions odataOptions)
     {
-        IQueryable<TResponse> queryable = await BuildQueryable<TResponse>();
+        IQueryable<TResponse> queryable = await BuildQueryable<TResponse>().NoSync();
 
-        List<T> result = await GetItems<T, TResponse>(odataOptions, queryable);
+        List<T> result = await GetItems<T, TResponse>(odataOptions, queryable).NoSync();
 
         return result;
     }
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable();
+        IQueryable<TDocument> queryable = await BuildQueryable().NoSync();
 
-        List<IdPartitionPair> results = await GetIds(queryable, delayMs);
+        List<IdPartitionPair> results = await GetIds(queryable, delayMs).NoSync();
 
         return results;
     }
@@ -88,9 +90,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null)
     {
-        IQueryable<TDocument> queryable = await BuildQueryable();
+        IQueryable<TDocument> queryable = await BuildQueryable().NoSync();
 
-        List<string> results = await GetPartitionKeys(queryable, delayMs);
+        List<string> results = await GetPartitionKeys(queryable, delayMs).NoSync();
 
         return results;
     }
@@ -127,7 +129,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (delayMs != null)
             timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
 
-        Microsoft.Azure.Cosmos.Container container = await Container;
+        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
         using FeedIterator<T> iterator = container.GetItemQueryIterator<T>(queryDefinition);
 
@@ -137,12 +139,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         while (iterator.HasMoreResults)
         {
-            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
+            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
             results.AddRange(response.ToList()); // TODO: I wonder if this is faster than foreach (response.Resource)
 
             if (delayMs != null)
-                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken);
+                await Task.Delay(timeSpanDelay!.Value, cancellationToken: cancellationToken).NoSync();
         }
 
         return results;
@@ -150,10 +152,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null)
     {
-        IQueryable<TDocument> query = await BuildQueryable();
+        IQueryable<TDocument> query = await BuildQueryable().NoSync();
         query = query.Where(c => c.CreatedAt >= startAt && c.CreatedAt <= endAt);
 
-        List<TDocument> items = await GetItems(query, delayMs);
+        List<TDocument> items = await GetItems(query, delayMs).NoSync();
 
         return items;
     }

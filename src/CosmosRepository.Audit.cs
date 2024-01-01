@@ -7,6 +7,8 @@ using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 
@@ -46,11 +48,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
         }
 
-        ValueTask result = _backgroundQueue.QueueValueTask(async _ =>
+        ValueTask result = _backgroundQueue.QueueValueTask(async cancellationToken =>
         {
-            Microsoft.Azure.Cosmos.Container container = await AuditContainer;
+            Microsoft.Azure.Cosmos.Container container = await AuditContainer.NoSync();
 
-           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, _);
+           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, cancellationToken).NoSync();
         });
 
         return result;

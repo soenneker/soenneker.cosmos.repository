@@ -7,6 +7,8 @@ using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 
@@ -28,10 +30,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse);
+            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value);
+                await Task.Delay(timespanDelay!.Value).NoSync();
         }
 
         return documents;
@@ -57,25 +59,25 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         // TODO: we should probably move this to replace
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async _ =>
+            await _backgroundQueue.QueueValueTask(async cancellationUtil =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container;
+                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-                ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, _);
+                ItemResponse<TDocument>? _ = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationUtil).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
-            });
+            }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container;
+            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
-            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options);
+            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options).NoSync();
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Update, id, item);
+            await CreateAuditItem(EventType.Update, id, item).NoSync();
 
         if (updatedDocument == null)
             return item;

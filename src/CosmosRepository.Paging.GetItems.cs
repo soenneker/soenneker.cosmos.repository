@@ -7,6 +7,8 @@ using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Logging;
 using Soenneker.Constants.Data;
 using Soenneker.Documents.Document;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
@@ -15,12 +17,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null)
     {
-        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken);
+        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken).NoSync();
 
         // required for paging
         queryable = queryable.OrderBy(c => c.CreatedAt);
 
-        (List<TDocument>, string?) result = await GetItemsPaged(queryable);
+        (List<TDocument>, string?) result = await GetItemsPaged(queryable).NoSync();
 
         return result;
     }
@@ -40,13 +42,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             MaxItemCount = pageSize
         };
 
-        Microsoft.Azure.Cosmos.Container container = await Container;
+        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
 
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
 
         CancellationToken? cancellationToken = _cancellationUtil.Get();
 
-        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken.GetValueOrDefault());
+        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken.GetValueOrDefault()).NoSync();
 
         List<TDocument> results = response.ToList();
 
@@ -62,7 +64,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         CancellationToken cancellationToken = _cancellationUtil.Get();
 
-        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
+        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
         List<T> results = response.ToList();
 
