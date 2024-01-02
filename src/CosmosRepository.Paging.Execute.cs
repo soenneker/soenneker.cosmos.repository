@@ -10,12 +10,12 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask)
+    public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask)
     {
         return ExecuteOnGetItemsPaged<TDocument>(queryable, resultTask);
     }
 
-    public async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask)
+    public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask)
     {
         string? continuationToken;
 
@@ -43,7 +43,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         } while (continuationToken != null);
     }
 
-    public async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask)
+    public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask)
     {
         string? continuationToken = null;
 
