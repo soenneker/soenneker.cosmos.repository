@@ -54,7 +54,7 @@
 
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.219" />
 
-        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.58" />
+        <PackageReference Include="Soenneker.Utils.Method" Version="2.1.59" />
 
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.154" />
     </ItemGroup>
