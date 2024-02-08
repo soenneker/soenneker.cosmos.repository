@@ -56,6 +56,6 @@
 
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.106" />
 
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.281" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.284" />
     </ItemGroup>
 </Project>
