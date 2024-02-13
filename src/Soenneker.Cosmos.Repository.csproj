@@ -52,7 +52,7 @@
 
         <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.122" />
 
-        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.451" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.454" />
 
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.121" />
 
