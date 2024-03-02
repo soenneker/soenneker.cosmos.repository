@@ -44,7 +44,7 @@
 
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.539" />
 
-        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.542" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.545" />
 
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.151" />
 
