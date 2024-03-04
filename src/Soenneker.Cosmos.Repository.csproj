@@ -48,7 +48,7 @@
 
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.156" />
 
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.737" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.743" />
 
         <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.157" />
 
