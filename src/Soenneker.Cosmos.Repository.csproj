@@ -42,7 +42,7 @@
 
         <PackageReference Include="Soenneker.Constants.Data" Version="2.1.165" />
 
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.575" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.576" />
 
         <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.585" />
 
