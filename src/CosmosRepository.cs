@@ -25,12 +25,12 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     /// Audit container that will store audit log for all entities.
     /// TODO: Perhaps need to make audit container available...
     /// </summary>
-    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer => _cosmosContainerUtil.GetContainer("audits");
+    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer => _cosmosContainerUtil.Get("audits");
 
     /// <summary>
     /// Cosmos DB container
     /// </summary>
-    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container => _cosmosContainerUtil.GetContainer(ContainerName);
+    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container => _cosmosContainerUtil.Get(ContainerName);
 
     /// <summary>
     /// Should we create audit records for this repository event?
