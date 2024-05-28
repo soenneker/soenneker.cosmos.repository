@@ -45,6 +45,6 @@
         <PackageReference Include="Soenneker.Utils.Cancellation" Version="2.1.224" />
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.874" />
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.227" />
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.594" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.595" />
     </ItemGroup>
 </Project>
