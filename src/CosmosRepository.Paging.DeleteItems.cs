@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -11,11 +12,11 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false)
+    public virtual async ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
 
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize).NoSync();
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, cancellationToken: cancellationToken).NoSync();
         query = query.OrderBy(c => c.CreatedAt);
 
         var newQuery = query.Select(c => new { c.DocumentId, c.PartitionKey });
@@ -26,14 +27,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (var result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).NoSync();
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue, cancellationToken).NoSync();
             }
-        }).NoSync();
+        }, cancellationToken).NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
-    public virtual async ValueTask DeleteItemsPaged<T>(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false)
+    public virtual async ValueTask DeleteItemsPaged<T>(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
 
@@ -43,9 +44,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (TDocument result in results)
             {
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue).NoSync();
+                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue, cancellationToken).NoSync();
             }
-        }).NoSync();
+        }, cancellationToken).NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }

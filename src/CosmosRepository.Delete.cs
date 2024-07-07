@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -16,35 +17,35 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask DeleteItem(string entityId, bool useQueue = false)
+    public virtual async ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = entityId.ToSplitId();
 
-        await DeleteItem(documentId, partitionKey, useQueue).NoSync();
+        await DeleteItem(documentId, partitionKey, useQueue, cancellationToken).NoSync();
     }
     
-    public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false)
+    public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
         
-        List<IdPartitionPair> ids = await GetAllIds().NoSync();
+        List<IdPartitionPair> ids = await GetAllIds(delayMs, cancellationToken).NoSync();
 
-        await DeleteIds(ids, delayMs, useQueue).NoSync();
+        await DeleteIds(ids, delayMs, useQueue, cancellationToken).NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
-    public async ValueTask DeleteItems(IQueryable<TDocument> queryable, double? delayMs = null, bool useQueue = false)
+    public async ValueTask DeleteItems(IQueryable<TDocument> queryable, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         if (_log)
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
-        List<IdPartitionPair> ids = await GetIds(queryable).NoSync();
+        List<IdPartitionPair> ids = await GetIds(queryable, delayMs, cancellationToken).NoSync();
 
-        await DeleteIds(ids, delayMs, useQueue).NoSync();
+        await DeleteIds(ids, delayMs, useQueue, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false)
+    public virtual async ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         if (_log)
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
@@ -56,17 +57,17 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (IdPartitionPair id in ids)
         {
-            await DeleteItem(id.Id, id.PartitionKey, useQueue).NoSync();
+            await DeleteItem(id.Id, id.PartitionKey, useQueue, cancellationToken).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timeSpanDelay!.Value).NoSync();
+                await Task.Delay(timeSpanDelay!.Value, cancellationToken).NoSync();
         }
 
         if (_log)
             Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
-    public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false)
+    public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         if (_log)
             Logger.LogDebug("-- COSMOS: {method} ({type}): DocID: {documentId}, PartitionKey: {partitionKey}", MethodUtil.Get(), typeof(TDocument).Name, documentId, partitionKey);
@@ -75,18 +76,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async cancellationToken =>
+            await _backgroundQueue.QueueValueTask(async token =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+                Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-                await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, cancellationToken).NoSync();
+                await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, token).NoSync();
             }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            _ = await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions).NoSync();
+            _ = await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, cancellationToken).NoSync();
         }
 
         string entityId = documentId.AddPartitionKey(partitionKey);

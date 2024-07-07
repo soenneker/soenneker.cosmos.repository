@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public async ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false)
+    public async ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         TimeSpan? timespanDelay = null;
 
@@ -22,16 +23,16 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await PatchItem(item.Id, operations, useQueue).NoSync();
+            _ = await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).NoSync();
+                await Task.Delay(timespanDelay!.Value, cancellationToken).NoSync();
         }
 
         return documents;
     }
 
-    public async ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false)
+    public async ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -45,19 +46,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         // TODO: we should probably move this to replace
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async cancellationToken =>
+            await _backgroundQueue.QueueValueTask(async token =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+                Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, cancellationToken).NoSync();
+                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
             }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations).NoSync();
+            ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, cancellationToken: cancellationToken).NoSync();
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }

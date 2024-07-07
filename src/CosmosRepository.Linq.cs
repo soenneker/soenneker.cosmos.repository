@@ -18,77 +18,75 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<IQueryable<TDocument>> BuildQueryable()
+    public ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default)
     {
-        return BuildQueryable<TDocument>();
+        return BuildQueryable<TDocument>(cancellationToken);
     }
 
-    public async ValueTask<IQueryable<T>> BuildQueryable<T>()
+    public async ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default)
     {
-        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
         IOrderedQueryable<T> result = container.GetItemLinqQueryable<T>();
         return result;
     }
 
-    public ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = 500, string? continuationToken = null)
+    public ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = 500, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
-        return BuildPagedQueryable<TDocument>(pageSize, continuationToken);
+        return BuildPagedQueryable<TDocument>(pageSize, continuationToken, cancellationToken);
     }
 
-    public async ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = 500, string? continuationToken = null)
+    public async ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = 500, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
         QueryRequestOptions requestOptions = new()
         {
             MaxItemCount = pageSize
         };
 
-        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         IOrderedQueryable<T> queryable = container.GetItemLinqQueryable<T>(continuationToken: continuationToken, requestOptions: requestOptions);
         
         return queryable;
     }
 
-    public async ValueTask<int> Count()
+    public async ValueTask<int> Count(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable().NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
 
-        int result = await Count(query).NoSync();
+        int result = await Count(query, cancellationToken).NoSync();
         return result;
     }
 
-    public async ValueTask<int> Count(IQueryable<TDocument> query)
+    public async ValueTask<int> Count(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
-        CancellationToken cancellationToken = _cancellationUtil.Get();
-
         Response<int>? response = await query.CountAsync(cancellationToken: cancellationToken).NoSync();
 
         int result = response.Resource;
         return result;
     }
 
-    public async ValueTask<bool> Any()
+    public async ValueTask<bool> Any(CancellationToken cancellationToken = default)
     {
         // TODO: there probably is a better way to do this than counting
-        int count = await Count().NoSync();
+        int count = await Count(cancellationToken).NoSync();
         return count != 0;
     }
 
-    public async ValueTask<bool> None()
+    public async ValueTask<bool> None(CancellationToken cancellationToken = default)
     {
-        bool result = !await Any().NoSync();
+        bool result = !await Any(cancellationToken).NoSync();
         return result;
     }
 
-    public async ValueTask<T?> GetItem<T>(IQueryable<T> queryable)
+    public async ValueTask<T?> GetItem<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default)
     {
-        List<T> items = await GetItems(queryable).NoSync();
+        List<T> items = await GetItems(queryable, cancellationToken: cancellationToken).NoSync();
 
         T? result = items.FirstOrDefault();
         return result;
     }
 
-    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> queryable, double? delayMs = null)
+    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> queryable, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(queryable, MethodUtil.Get());
 
@@ -96,8 +94,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (delayMs != null)
             timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
-
-        CancellationToken cancellationToken = _cancellationUtil.Get();
 
         using FeedIterator<T> iterator = queryable.ToFeedIterator();
 

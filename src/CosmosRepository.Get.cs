@@ -14,47 +14,47 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public async ValueTask<bool> GetExists(string id)
+    public async ValueTask<bool> GetExists(string id, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        TDocument? doc = await GetItem(documentId, partitionKey).NoSync();
+        TDocument? doc = await GetItem(documentId, partitionKey, cancellationToken).NoSync();
 
         bool result = doc != null;
         return result;
     }
 
-    public async ValueTask<bool> GetExistsByPartitionKey(string partitionKey)
+    public async ValueTask<bool> GetExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable().NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
 
         query = query.Where(c => c.PartitionKey == partitionKey);
         IQueryable<string> newQuery = query.Select(c => c.Id);
 
-        string? docId = await GetItem(newQuery).NoSync();
+        string? docId = await GetItem(newQuery, cancellationToken).NoSync();
 
         bool result = docId != null;
         return result;
     }
 
-    public virtual ValueTask<TDocument?> GetItem(string id)
+    public virtual ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        return GetItem(documentId, partitionKey);
+        return GetItem(documentId, partitionKey, cancellationToken);
     }
 
-    public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey)
+    public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable().NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
         query = query.Where(c => c.PartitionKey == partitionKey);
 
-        TDocument? doc = await GetItem(query).NoSync();
+        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
 
         return doc;
     }
     
-    public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey)
+    public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -65,9 +65,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, logId);
             }
 
-            CancellationToken cancellationToken = _cancellationUtil.Get();
-
-            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
             ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
                 cancellationToken: cancellationToken).NoSync();
@@ -81,24 +79,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public virtual async ValueTask<TDocument?> GetFirst()
+    public virtual async ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable().NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
         query = query.OrderBy(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query).NoSync();
+        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
 
         return doc;
     }
 
-    public virtual async ValueTask<TDocument?> GetLast()
+    public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable().NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
         query = query.OrderByDescending(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query).NoSync();
+        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
 
         return doc;
     }

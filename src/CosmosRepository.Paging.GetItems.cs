@@ -15,19 +15,19 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null)
+    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken).NoSync();
+        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken).NoSync();
 
         // required for paging
         queryable = queryable.OrderBy(c => c.CreatedAt);
 
-        (List<TDocument>, string?) result = await GetItemsPaged(queryable).NoSync();
+        (List<TDocument>, string?) result = await GetItemsPaged(queryable, cancellationToken).NoSync();
 
         return result;
     }
 
-    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken)
+    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken, CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -42,11 +42,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             MaxItemCount = pageSize
         };
 
-        Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
-
-        CancellationToken cancellationToken = _cancellationUtil.Get();
 
         FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
@@ -55,14 +53,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return (results, response.ContinuationToken);
     }
 
-    public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> queryable)
+    public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default)
     {
         if (_log)
             LogQuery<T>(queryable, MethodUtil.Get());
 
         using FeedIterator<T> iterator = queryable.ToFeedIterator();
-
-        CancellationToken cancellationToken = _cancellationUtil.Get();
 
         FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 

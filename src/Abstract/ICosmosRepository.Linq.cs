@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Soenneker.Constants.Data;
 
@@ -10,46 +11,46 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <inheritdoc cref="BuildQueryable{T}"/>
     [Pure]
-    ValueTask<IQueryable<TDocument>> BuildQueryable();
+    ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns an empty queryable that can utilize LINQ for the container that the repository belongs to. Does not actually query.
     /// </summary>
     [Pure]
-    ValueTask<IQueryable<T>> BuildQueryable<T>();
+    ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default);
 
     ///<inheritdoc cref="BuildPagedQueryable{T}"/>
     [Pure]
-    ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null);
+    ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns an empty queryable that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
     /// Be sure to order in your query. Leverage QueryableExtension.ToOrdered{IQueryable}/>
     /// </summary>
     [Pure]
-    ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null);
+    ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Essentially wraps <see cref="GetItems{T}(string, double?)"/> with .FirstOrDefault()
+    /// Essentially wraps <see cref="GetItems{T}(string, double?, CancellationToken)"/> with .FirstOrDefault()
     /// </summary>
     [Pure]
-    ValueTask<T?> GetItem<T>(IQueryable<T> queryable);
+    ValueTask<T?> GetItem<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Will always return a non-null list. It may or may not have items.
     /// </summary>
     [Pure]
-    ValueTask<List<T>> GetItems<T>(IQueryable<T> queryable, double? delayMs = null);
+    ValueTask<List<T>> GetItems<T>(IQueryable<T> queryable, double? delayMs = null, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<int> Count();
+    ValueTask<int> Count(CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<int> Count(IQueryable<TDocument> query);
+    ValueTask<int> Count(IQueryable<TDocument> query, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<bool> Any();
+    ValueTask<bool> Any(CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<bool> None();
+    ValueTask<bool> None(CancellationToken cancellationToken = default);
 }

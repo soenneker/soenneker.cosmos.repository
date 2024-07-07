@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false)
+    public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -24,10 +25,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type}): {document}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
         }
 
-        return InternalAddItem(document, useQueue, excludeResponse);
+        return InternalAddItem(document, useQueue, excludeResponse, cancellationToken);
     }
 
-    public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false)
+    public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         if (_log)
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
@@ -39,16 +40,16 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            item.Id = await InternalAddItem(item, useQueue, excludeResponse).NoSync();
+            item.Id = await InternalAddItem(item, useQueue, excludeResponse, cancellationToken).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).NoSync();
+                await Task.Delay(timespanDelay!.Value, cancellationToken).NoSync();
         }
 
         return documents;
     }
 
-    private async ValueTask<string> InternalAddItem(TDocument document, bool useQueue, bool excludeResponse)
+    private async ValueTask<string> InternalAddItem(TDocument document, bool useQueue, bool excludeResponse, CancellationToken cancellationToken)
     {
         if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
             throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
@@ -60,18 +61,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async cancellationToken =>
+            await _backgroundQueue.QueueValueTask(async token =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+                Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
+                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync();
             }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options).NoSync();
+            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
         }
 
         if (AuditEnabled)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +12,6 @@ using Soenneker.Cosmos.Repository.Abstract.Utils;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
-using Soenneker.Utils.Cancellation.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
 
 namespace Soenneker.Cosmos.Repository;
@@ -25,12 +25,12 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     /// Audit container that will store audit log for all entities.
     /// TODO: Perhaps need to make audit container available...
     /// </summary>
-    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer => _cosmosContainerUtil.Get("audits");
+    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer(CancellationToken cancellationToken = default) => _cosmosContainerUtil.Get("audits", cancellationToken);
 
     /// <summary>
     /// Cosmos DB container
     /// </summary>
-    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container => _cosmosContainerUtil.Get(ContainerName);
+    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container(CancellationToken cancellationToken = default) => _cosmosContainerUtil.Get(ContainerName, cancellationToken);
 
     /// <summary>
     /// Should we create audit records for this repository event?
@@ -45,7 +45,6 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     protected ILogger<CosmosRepository<TDocument>> Logger { get; }
 
     private readonly IUserContext _userContext;
-    private readonly ICancellationUtil _cancellationUtil;
     private readonly IBackgroundQueue _backgroundQueue;
 
     private readonly bool _log;
@@ -54,12 +53,11 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     private readonly ItemRequestOptions _excludeRequestOptions;
 
     protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
-        IUserContext userContext, ICancellationUtil cancellationUtil, IBackgroundQueue backgroundQueue)
+        IUserContext userContext, IBackgroundQueue backgroundQueue)
     {
         _cosmosContainerUtil = cosmosContainerUtil;
         Logger = logger;
         _userContext = userContext;
-        _cancellationUtil = cancellationUtil;
         _backgroundQueue = backgroundQueue;
         
         _excludeRequestOptions = new ItemRequestOptions

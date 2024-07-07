@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Soenneker.Documents.Document;
@@ -10,18 +11,18 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask)
+    public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
-        return ExecuteOnGetItemsPaged<TDocument>(queryable, resultTask);
+        return ExecuteOnGetItemsPaged<TDocument>(queryable, resultTask, cancellationToken);
     }
 
-    public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask)
+    public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
         string? continuationToken;
 
         do
         {
-            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(queryable).NoSync();
+            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(queryable, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -29,13 +30,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         } while (continuationToken != null);
     }
 
-    public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask)
+    public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken).NoSync();
+            (List<TDocument>? docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -43,13 +44,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         } while (continuationToken != null);
     }
 
-    public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask)
+    public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken).NoSync();
+            (List<TDocument>? docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -16,12 +17,12 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<TDocument> UpdateItem(TDocument item, bool useQueue = false, bool excludeResponse = false)
+    public ValueTask<TDocument> UpdateItem(TDocument item, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
-       return UpdateItem(item.Id, item, useQueue, excludeResponse);
+       return UpdateItem(item.Id, item, useQueue, excludeResponse, cancellationToken);
     }
 
-    public async ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false)
+    public async ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         TimeSpan? timespanDelay = null;
 
@@ -30,16 +31,16 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
-            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse).NoSync();
+            _ = await UpdateItem(item.Id, item, useQueue, excludeResponse, cancellationToken).NoSync();
 
             if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value).NoSync();
+                await Task.Delay(timespanDelay!.Value, cancellationToken).NoSync();
         }
 
         return documents;
     }
 
-    public async ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false)
+    public async ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -59,19 +60,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         // TODO: we should probably move this to replace
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async cancellationUtil =>
+            await _backgroundQueue.QueueValueTask(async token =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+                Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                ItemResponse<TDocument>? _ = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationUtil).NoSync();
+                ItemResponse<TDocument>? _ = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
             }).NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container.NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options).NoSync();
+            ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationToken).NoSync();
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }
