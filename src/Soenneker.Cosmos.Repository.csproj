@@ -44,6 +44,6 @@
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.1227" />
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.1042" />
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.267" />
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.690" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.691" />
     </ItemGroup>
 </Project>
