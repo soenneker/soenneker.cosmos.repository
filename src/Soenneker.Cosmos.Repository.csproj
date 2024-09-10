@@ -42,7 +42,7 @@
         <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.1114" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.296" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.1359" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.1177" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="2.1.1180" />
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.302" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.789" />
     </ItemGroup>
