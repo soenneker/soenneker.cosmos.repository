@@ -37,7 +37,7 @@
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
         <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.0.0" />
-        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.309" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="2.1.310" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.1055" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.1138" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.304" />
