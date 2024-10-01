@@ -39,7 +39,7 @@
         <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.0.0" />
         <PackageReference Include="Soenneker.Constants.Data" Version="2.1.336" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.1153" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.1264" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.1270" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.329" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.1468" />
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.1312" />
