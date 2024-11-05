@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using System.Threading;
 using System.Threading.Tasks;
 using Soenneker.Documents.Audit;
 using Soenneker.Enums.EventType;
@@ -14,5 +15,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Look up the user (if it exists), create an Audit document, and add it to the audit container.
     /// Always uses the queue
     /// </summary>
-    ValueTask CreateAuditItem(EventType eventType, string entityId, object? item = null);
+    ValueTask CreateAuditItem(EventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default);
 }

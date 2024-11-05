@@ -52,7 +52,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                 ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
-            }).NoSync();
+            }, cancellationToken).NoSync();
         }
         else
         {

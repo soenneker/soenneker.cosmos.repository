@@ -66,7 +66,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                 ItemResponse<TDocument>? _ = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
-            }).NoSync();
+            }, cancellationToken).NoSync();
         }
         else
         {
@@ -78,7 +78,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Update, id, item).NoSync();
+            await CreateAuditItem(EventType.Update, id, item, cancellationToken).NoSync();
 
         if (updatedDocument == null)
             return item;

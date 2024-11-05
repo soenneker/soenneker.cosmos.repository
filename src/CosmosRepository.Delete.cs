@@ -78,10 +78,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async token =>
             {
-                Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+                Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, token).NoSync();
-            }).NoSync();
+                _ = await container.DeleteItemAsync<TDocument>(documentId, partitionKeyObj, _excludeRequestOptions, token).NoSync();
+            }, cancellationToken).NoSync();
         }
         else
         {
@@ -93,6 +93,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         string entityId = documentId.AddPartitionKey(partitionKey);
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Delete, entityId).NoSync();
+            await CreateAuditItem(EventType.Delete, entityId, cancellationToken: cancellationToken).NoSync();
     }
 }

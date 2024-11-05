@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -36,7 +37,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return audit;
     }
 
-    public ValueTask CreateAuditItem(EventType eventType, string entityId, object? item = null)
+    public ValueTask CreateAuditItem(EventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default)
     {
         string? userId = _userContext.GetIdSafe();
 
@@ -48,12 +49,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
         }
 
-        ValueTask result = _backgroundQueue.QueueValueTask(async cancellationToken =>
+        ValueTask result = _backgroundQueue.QueueValueTask(async token =>
         {
-            Microsoft.Azure.Cosmos.Container container = await AuditContainer(cancellationToken).NoSync();
+            Microsoft.Azure.Cosmos.Container container = await AuditContainer(token).NoSync();
 
-           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, cancellationToken).NoSync();
-        });
+           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, token).NoSync();
+        }, cancellationToken);
 
         return result;
     }
