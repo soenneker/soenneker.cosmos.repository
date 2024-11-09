@@ -41,7 +41,7 @@
         <PackageReference Include="Soenneker.Cosmos.Container" Version="2.1.1273" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="2.1.1408" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="2.1.361" />
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.1557" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="2.1.1559" />
         <PackageReference Include="Soenneker.Utils.Json" Version="2.1.1446" />
         <PackageReference Include="Soenneker.Utils.Method" Version="2.1.359" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.960" />
