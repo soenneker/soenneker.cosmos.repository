@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos;
+using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
@@ -32,6 +33,9 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
 
     [Pure]
     ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> ids, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<List<TDocument>?> GetAllByIdNamePairs(IEnumerable<IdNamePair> pairs, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// <inheritdoc cref="GetItems(string, double?, CancellationToken)"/> <para/>

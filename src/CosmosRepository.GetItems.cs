@@ -8,6 +8,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Logging;
 using Soenneker.Documents.Document;
+using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -38,8 +39,20 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> documentIds, CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
-        query = query.Where(b => documentIds.Contains(b.DocumentId));
+        query = query.Where(c => documentIds.Contains(c.DocumentId));
         List<TDocument> docs = await GetItems(query, cancellationToken: cancellationToken).NoSync();
+        return docs;
+    }
+
+    public async ValueTask<List<TDocument>?> GetAllByIdNamePairs(IEnumerable<IdNamePair> pairs, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<string> ids = pairs.Select(c => c.Id);
+
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        query = query.Where(c => ids.Contains(c.Id));
+
+        List<TDocument> docs = await GetItems(query, cancellationToken: cancellationToken).NoSync();
+
         return docs;
     }
 

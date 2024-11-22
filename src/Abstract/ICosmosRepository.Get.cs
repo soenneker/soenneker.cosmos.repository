@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using Soenneker.Dtos.IdNamePair;
+using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +30,9 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>null if cannot be found</returns>
     [Pure]
     ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Will not throw.

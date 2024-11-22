@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Documents.Document;
+using Soenneker.Dtos.IdNamePair;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -53,7 +54,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         return doc;
     }
-    
+
+    public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)
+    {
+        return GetItem(idNamePair.Id, idNamePair.Id, cancellationToken);
+    }
+
     public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default)
     {
         try
