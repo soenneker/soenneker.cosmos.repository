@@ -43,7 +43,7 @@
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.406" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.405" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1680" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="3.0.1602" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="3.0.1603" />
         <PackageReference Include="Soenneker.Utils.Method" Version="3.0.404" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.980" />
     </ItemGroup>
