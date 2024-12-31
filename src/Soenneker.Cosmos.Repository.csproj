@@ -37,14 +37,14 @@
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
         <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.1.1" />
-        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.443" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.444" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1501" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1679" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1686" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.441" />
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.443" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.446" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1803" />
         <PackageReference Include="Soenneker.Utils.Json" Version="3.0.1749" />
-        <PackageReference Include="Soenneker.Utils.Method" Version="3.0.420" />
+        <PackageReference Include="Soenneker.Utils.Method" Version="3.0.421" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.1053" />
     </ItemGroup>
 </Project>
