@@ -14,7 +14,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns an empty queryable that can utilize LINQ for the container that the repository belongs to. Does not actually query.
+    /// Returns an empty query that can utilize LINQ for the container that the repository belongs to. Does not actually query.
     /// </summary>
     [Pure]
     ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default);
@@ -24,7 +24,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns an empty queryable that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
+    /// Returns an empty query that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
     /// Be sure to order in your query. Leverage QueryableExtension.ToOrdered{IQueryable}/>
     /// </summary>
     [Pure]
@@ -34,13 +34,13 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Essentially wraps <see cref="GetItems{T}(string, double?, CancellationToken)"/> with .FirstOrDefault()
     /// </summary>
     [Pure]
-    ValueTask<T?> GetItem<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default);
+    ValueTask<T?> GetItem<T>(IQueryable<T> query, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Will always return a non-null list. It may or may not have items.
     /// </summary>
     [Pure]
-    ValueTask<List<T>> GetItems<T>(IQueryable<T> queryable, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default);
 
     [Pure]
     ValueTask<int> Count(CancellationToken cancellationToken = default);

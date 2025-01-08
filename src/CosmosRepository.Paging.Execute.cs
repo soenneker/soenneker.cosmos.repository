@@ -11,18 +11,18 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
+    public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> query, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
-        return ExecuteOnGetItemsPaged<TDocument>(queryable, resultTask, cancellationToken);
+        return ExecuteOnGetItemsPaged<TDocument>(query, resultTask, cancellationToken);
     }
 
-    public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
+    public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> query, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
         string? continuationToken;
 
         do
         {
-            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(queryable, cancellationToken).NoSync();
+            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(query, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 

@@ -14,19 +14,30 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public async ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
+    public async ValueTask<List<TDocument>> PatchItems(
+        List<TDocument> documents,
+        List<PatchOperation> operations,
+        double? delayMs = null,
+        bool useQueue = false,
+        CancellationToken cancellationToken = default)
     {
-        TimeSpan? timespanDelay = null;
+        // Precompute delay once
+        TimeSpan? timespanDelay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
-        if (delayMs != null)
-            timespanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
-
-        foreach (TDocument item in documents)
+        if (timespanDelay.HasValue)
         {
-            _ = await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
-
-            if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value, cancellationToken).NoSync();
+            foreach (TDocument item in documents)
+            {
+                await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
+                await Task.Delay(timespanDelay.Value, cancellationToken).NoSync();
+            }
+        }
+        else
+        {
+            foreach (TDocument item in documents)
+            {
+                await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
+            }
         }
 
         return documents;
@@ -50,7 +61,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-                ItemResponse<TDocument>? response = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token).NoSync();
+                _ = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token).NoSync();
                 //Logger.LogInformation(response.RequestCharge.ToString());
             }, cancellationToken).NoSync();
         }

@@ -15,7 +15,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <remarks>
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>
-    ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> queryable, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
+    ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> query, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Be sure to pass a query that was built via <see cref="BuildPagedQueryable"/>
@@ -23,7 +23,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <remarks>
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>
-    ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> queryable, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default);
+    ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> query, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Wraps <see cref="GetAllPaged"/> and hides away the continuationToken logic in a do-while.

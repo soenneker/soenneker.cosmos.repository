@@ -26,5 +26,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>
     [Pure]
-    ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default);
+    ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query, CancellationToken cancellationToken = default);
 }

@@ -28,22 +28,38 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return InternalAddItem(document, useQueue, excludeResponse, cancellationToken);
     }
 
-    public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<List<TDocument>> AddItems(
+        List<TDocument> documents,
+        double? delayMs = null,
+        bool useQueue = false,
+        bool excludeResponse = false,
+        CancellationToken cancellationToken = default)
     {
         if (_log)
-            Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name, delayMs.GetValueOrDefault());
-
-        TimeSpan? timespanDelay = null;
-
-        if (delayMs != null)
-            timespanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
-
-        foreach (TDocument item in documents)
         {
-            item.Id = await InternalAddItem(item, useQueue, excludeResponse, cancellationToken).NoSync();
+            Logger.LogDebug(
+                "-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs",
+                MethodUtil.Get(),
+                typeof(TDocument).Name,
+                delayMs.GetValueOrDefault());
+        }
 
-            if (delayMs != null)
-                await Task.Delay(timespanDelay!.Value, cancellationToken).NoSync();
+        if (delayMs.HasValue)
+        {
+            TimeSpan timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
+
+            foreach (TDocument item in documents)
+            {
+                item.Id = await InternalAddItem(item, useQueue, excludeResponse, cancellationToken).NoSync();
+                await Task.Delay(timeSpanDelay, cancellationToken).NoSync();
+            }
+        }
+        else
+        {
+            foreach (TDocument item in documents)
+            {
+                item.Id = await InternalAddItem(item, useQueue, excludeResponse, cancellationToken).NoSync();
+            }
         }
 
         return documents;
@@ -65,14 +81,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync();
+                _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync();
             }, cancellationToken).NoSync();
         }
         else
         {
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
+            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
         }
 
         if (AuditEnabled)

@@ -15,55 +15,66 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(
+        int pageSize = DataConstants.DefaultCosmosPageSize,
+        string? continuationToken = null,
+        CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> queryable = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken).NoSync();
+        // Build the query with paging and sorting
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken).NoSync();
 
-        // required for paging
-        queryable = queryable.OrderBy(c => c.CreatedAt);
+        // OrderBy is required for paging
+        query = query.OrderBy(c => c.CreatedAt);
 
-        (List<TDocument>, string?) result = await GetItemsPaged(queryable, cancellationToken).NoSync();
-
-        return result;
+        // Directly return the result from GetItemsPaged
+        return await GetItemsPaged(query, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(
+        QueryDefinition queryDefinition,
+        int pageSize,
+        string? continuationToken,
+        CancellationToken cancellationToken = default)
     {
+        // Logging only when enabled
         if (_log)
         {
             string query = BuildQueryLogText(queryDefinition);
-
-            Logger.LogDebug("-- COSMOS: {method} ({type}): pageSize: {pageSize}, continuationToken: {token}, Query: {query}", MethodUtil.Get(), typeof(TDocument).Name, pageSize, continuationToken,
+            Logger.LogDebug(
+                "-- COSMOS: {method} ({type}): pageSize: {pageSize}, continuationToken: {token}, Query: {query}",
+                MethodUtil.Get(),
+                typeof(TDocument).Name,
+                pageSize,
+                continuationToken,
                 query);
         }
 
-        var requestOptions = new QueryRequestOptions
-        {
-            MaxItemCount = pageSize
-        };
+        // Set query request options
+        var requestOptions = new QueryRequestOptions { MaxItemCount = pageSize };
 
+        // Fetch the container once
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
+        // Create and execute the feed iterator
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
-
         FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        List<TDocument> results = response.ToList();
-
-        return (results, response.ContinuationToken);
+        // Convert results
+        return (response.ToList(), response.ContinuationToken);
     }
 
-    public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> queryable, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<(List<T>, string?)> GetItemsPaged<T>(
+        IQueryable<T> query,
+        CancellationToken cancellationToken = default)
     {
         if (_log)
-            LogQuery<T>(queryable, MethodUtil.Get());
+            LogQuery<T>(query, MethodUtil.Get());
 
-        using FeedIterator<T> iterator = queryable.ToFeedIterator();
-
+        // Execute the query and fetch results
+        using FeedIterator<T> iterator = query.ToFeedIterator();
         FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        List<T> results = response.ToList();
-
-        return (results, response.ContinuationToken);
+        // Convert results
+        return (response.ToList(), response.ContinuationToken);
     }
 }

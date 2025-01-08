@@ -4,7 +4,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
@@ -45,15 +44,6 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<T>> GetItems<T>(string query, double? delayMs = null, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<List<T>> GetItems<T, TResponse>(ODataQueryOptions odataOptions, CancellationToken cancellationToken = default);
-
-    [Pure]
-    ValueTask<List<TDocument>> GetItems<TResponse>(ODataQueryOptions odataOptions, CancellationToken cancellationToken = default);
-
-    [Pure]
-    ValueTask<List<T>> GetItems<T, TResponse>(ODataQueryOptions odataOptions, IQueryable query, CancellationToken cancellationToken = default);
-
-    [Pure]
     ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -72,7 +62,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Before executing, adds an additional where clause to only gather ids from a given queryable (useful say during deletion)
+    /// Before executing, adds an additional where clause to only gather ids from a given query (useful say during deletion)
     /// </summary>
     [Pure]
     ValueTask<List<IdPartitionPair>> GetIds(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default);
@@ -81,7 +71,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Before executing, adds an additional where clause to only gather partitionKeys from a given queryable
+    /// Before executing, adds an additional where clause to only gather partitionKeys from a given query
     /// </summary>
     [Pure]
     ValueTask<List<string>> GetPartitionKeys(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default);

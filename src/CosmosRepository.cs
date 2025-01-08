@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
@@ -87,12 +87,12 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         Logger.LogDebug("-- COSMOS: {method} ({type}): {query}", methodName, typeof(T).Name, queryText);
     }
 
-    private void LogQuery<T>(IQueryable queryable, string? methodName)
+    private void LogQuery<T>(IQueryable query, string? methodName)
     {
         if (!_log)
             return;
 
-        var queryText = queryable.ToString();
+        var queryText = query.ToString();
 
         Logger.LogDebug("-- COSMOS: {method} ({type}): {query}", methodName, typeof(T).Name, queryText);
     }
@@ -101,20 +101,23 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     {
         string queryText = queryDefinition.QueryText;
 
-        IEnumerable<(string Name, object Value)> queryParameters = queryDefinition.GetQueryParameters().Reverse(); // we need to reverse because in large queries (> 10) we'll overwrite incorrectly
+        // Materialize reversed query parameters to avoid deferred execution
+        (string Name, object Value)[] queryParameters = queryDefinition.GetQueryParameters().Reverse().ToArray();
 
-        foreach ((string name, object value) in queryParameters)
+        var builder = new StringBuilder(queryText);
+
+        foreach ((string? name, object? value) in queryParameters)
         {
-            object outputValue = value;
-
-            if (value is string or DateTime)
+            string outputValue = value switch
             {
-                outputValue = $"\"{value}\"";
-            }
+                string or DateTime => $"\"{value}\"",
+                null => "null", // Explicitly handle null values
+                _ => Convert.ToString(value) ?? "null" // Ensure Convert.ToString doesn't return null
+            };
 
-            queryText = queryText.Replace(name, Convert.ToString(outputValue));
+            builder.Replace(name, outputValue);
         }
 
-        return queryText;
+        return builder.ToString();
     }
 }

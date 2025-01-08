@@ -50,9 +50,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
         query = query.Where(c => c.PartitionKey == partitionKey);
 
-        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
-
-        return doc;
+        return await GetItem(query, cancellationToken).NoSync();
     }
 
     public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)
@@ -76,8 +74,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
                 cancellationToken: cancellationToken).NoSync();
 
-            TDocument? doc = response.Resource;
-            return doc;
+            return response.Resource;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -91,9 +88,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         query = query.OrderBy(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
-
-        return doc;
+        return await GetItem(query, cancellationToken).NoSync();
     }
 
     public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default)
@@ -102,8 +97,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         query = query.OrderByDescending(x => x.CreatedAt);
         query = query.Take(1);
 
-        TDocument? doc = await GetItem(query, cancellationToken).NoSync();
-
-        return doc;
+        return await GetItem(query, cancellationToken).NoSync();
     }
 }
