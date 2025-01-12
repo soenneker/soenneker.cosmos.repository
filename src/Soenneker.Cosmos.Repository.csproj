@@ -38,7 +38,7 @@
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
         <PackageReference Include="Soenneker.Constants.Data" Version="3.0.462" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1558" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1750" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1751" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.474" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.468" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1849" />
