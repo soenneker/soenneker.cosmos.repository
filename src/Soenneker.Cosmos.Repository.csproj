@@ -36,7 +36,7 @@
         <None Include="..\README.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
-        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.488" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.489" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1638" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1838" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.506" />
