@@ -39,7 +39,7 @@
         <PackageReference Include="Soenneker.Constants.Data" Version="3.0.499" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1660" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1876" />
-        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.518" />
+        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.519" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.522" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1917" />
         <PackageReference Include="Soenneker.Utils.Json" Version="3.0.1928" />
