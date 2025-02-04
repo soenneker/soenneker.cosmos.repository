@@ -69,7 +69,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         ItemRequestOptions? options = null;
 
         if (excludeResponse)
-            options = _excludeRequestOptions;
+            options = ExcludeRequestOptions;
 
         if (useQueue)
         {

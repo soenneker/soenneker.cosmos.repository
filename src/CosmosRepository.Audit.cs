@@ -53,7 +53,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             Microsoft.Azure.Cosmos.Container container = await AuditContainer(token).NoSync();
 
-           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), _excludeRequestOptions, token).NoSync();
+           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), ExcludeRequestOptions, token).NoSync();
         }, cancellationToken);
 
         return result;

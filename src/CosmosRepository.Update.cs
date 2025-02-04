@@ -45,7 +45,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             (string partitionKey, string documentId) = item.Id.ToSplitId();
 
             // Precompute request options
-            ItemRequestOptions? options = excludeResponse ? _excludeRequestOptions : null;
+            ItemRequestOptions? options = excludeResponse ? ExcludeRequestOptions : null;
 
             if (useQueue)
             {
@@ -98,7 +98,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         (string partitionKey, string documentId) = id.ToSplitId();
 
         // Precompute request options
-        ItemRequestOptions? options = excludeResponse ? _excludeRequestOptions : null;
+        ItemRequestOptions? options = excludeResponse ? ExcludeRequestOptions : null;
 
         // UseQueue Logic
         if (useQueue)

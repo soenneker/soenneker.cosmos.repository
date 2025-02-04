@@ -96,14 +96,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, _excludeRequestOptions, token).NoSync();
+                _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, ExcludeRequestOptions, token).NoSync();
             }, cancellationToken).NoSync();
         }
         else
         {
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, _excludeRequestOptions, cancellationToken).NoSync();
+            _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, ExcludeRequestOptions, cancellationToken).NoSync();
         }
 
         string entityId = documentId.AddPartitionKey(partitionKey);
