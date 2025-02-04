@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Audit;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
@@ -53,7 +54,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             Microsoft.Azure.Cosmos.Container container = await AuditContainer(token).NoSync();
 
-           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), ExcludeRequestOptions, token).NoSync();
+           await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), CosmosRequestOptions.ExcludeResponse, token).NoSync();
         }, cancellationToken);
 
         return result;

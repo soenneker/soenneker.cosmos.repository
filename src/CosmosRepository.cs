@@ -50,10 +50,6 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     private readonly bool _log;
     private readonly bool _auditLog;
 
-    protected ItemRequestOptions ExcludeRequestOptions { get; }
-
-    protected QueryRequestOptions MaxOneRequestOptions { get; }
-
     protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
         IUserContext userContext, IBackgroundQueue backgroundQueue)
     {
@@ -61,10 +57,6 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         Logger = logger;
         _userContext = userContext;
         _backgroundQueue = backgroundQueue;
-
-        ExcludeRequestOptions = new ItemRequestOptions {EnableContentResponseOnWrite = false};
-
-        MaxOneRequestOptions = new QueryRequestOptions {MaxItemCount = 1};
 
         _log = config.GetValue<bool>("Azure:Cosmos:Log");
         _auditLog = config.GetValue<bool>("Azure:Cosmos:AuditLog");

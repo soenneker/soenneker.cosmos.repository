@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
 using Soenneker.Enums.JsonOptions;
@@ -69,7 +70,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         ItemRequestOptions? options = null;
 
         if (excludeResponse)
-            options = ExcludeRequestOptions;
+            options = CosmosRequestOptions.ExcludeResponse;
 
         if (useQueue)
         {

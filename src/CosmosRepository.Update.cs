@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.EventType;
 using Soenneker.Enums.JsonOptions;
@@ -45,7 +46,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             (string partitionKey, string documentId) = item.Id.ToSplitId();
 
             // Precompute request options
-            ItemRequestOptions? options = excludeResponse ? ExcludeRequestOptions : null;
+            ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
             if (useQueue)
             {
@@ -98,7 +99,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         (string partitionKey, string documentId) = id.ToSplitId();
 
         // Precompute request options
-        ItemRequestOptions? options = excludeResponse ? ExcludeRequestOptions : null;
+        ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
         // UseQueue Logic
         if (useQueue)

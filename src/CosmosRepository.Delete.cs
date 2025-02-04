@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdPartitionPair;
 using Soenneker.Enums.EventType;
@@ -96,14 +97,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, ExcludeRequestOptions, token).NoSync();
+                _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, CosmosRequestOptions.ExcludeResponse, token).NoSync();
             }, cancellationToken).NoSync();
         }
         else
         {
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, ExcludeRequestOptions, cancellationToken).NoSync();
+            _ = await container.DeleteItemStreamAsync(documentId, partitionKeyObj, CosmosRequestOptions.ExcludeResponse, cancellationToken).NoSync();
         }
 
         string entityId = documentId.AddPartitionKey(partitionKey);
