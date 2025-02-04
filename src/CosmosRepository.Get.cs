@@ -27,7 +27,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> GetExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         int count = await query
             .Where(c => c.PartitionKey == partitionKey)

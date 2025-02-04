@@ -11,15 +11,6 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     [Pure]
-    ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Returns an empty query that can utilize LINQ for the container that the repository belongs to. Does not actually query.
-    /// </summary>
-    [Pure]
-    ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default);
-
-    [Pure]
     ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
 
     [Pure]

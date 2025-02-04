@@ -18,16 +18,6 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default)
-    {
-        return BuildQueryable(null, cancellationToken);
-    }
-
-    public ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default)
-    {
-        return BuildQueryable<T>(null, cancellationToken);
-    }
-
     public ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default)
     {
         return BuildQueryable<TDocument>(queryRequestOptions, cancellationToken);
@@ -72,7 +62,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> Any(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         int count = await query.Take(1).CountAsync(cancellationToken).NoSync();
 

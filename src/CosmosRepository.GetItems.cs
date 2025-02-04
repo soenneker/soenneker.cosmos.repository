@@ -17,7 +17,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.Select(d => d);
 
         return await GetItems(query, delayMs, cancellationToken).NoSync();
@@ -25,7 +25,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.Where(c => c.PartitionKey == partitionKey);
 
         return await GetItems(query, delayMs, cancellationToken).NoSync();
@@ -70,7 +70,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         return await GetIds(query, delayMs, cancellationToken).NoSync();
     }
@@ -84,7 +84,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         return await GetPartitionKeys(query, delayMs, cancellationToken).NoSync();
     }
@@ -132,7 +132,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.Where(c => c.CreatedAt >= startAt && c.CreatedAt <= endAt);
 
         return await GetItems(query, delayMs, cancellationToken).NoSync();

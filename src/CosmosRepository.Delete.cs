@@ -114,7 +114,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask DeleteCreatedAtBetween(DateTime startAt, DateTime endAt, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable<TDocument>(cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable<TDocument>(null, cancellationToken).NoSync();
         query = query.Where(b => b.CreatedAt >= startAt && b.CreatedAt <= endAt);
 
         await DeleteItems(query, cancellationToken: cancellationToken).NoSync();
