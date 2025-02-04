@@ -15,9 +15,7 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(
-        int pageSize = DataConstants.DefaultCosmosPageSize,
-        string? continuationToken = null,
+    public virtual async ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
         // Build the query with paging and sorting
@@ -30,11 +28,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return await GetItemsPaged(query, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(
-        QueryDefinition queryDefinition,
-        int pageSize,
-        string? continuationToken,
-        CancellationToken cancellationToken = default)
+    public virtual async ValueTask<(List<TDocument>, string?)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken, CancellationToken cancellationToken = default)
     {
         // Logging only when enabled
         if (_log)
@@ -50,7 +44,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
 
         // Set query request options
-        var requestOptions = new QueryRequestOptions { MaxItemCount = pageSize };
+        var requestOptions = new QueryRequestOptions {MaxItemCount = pageSize};
 
         // Fetch the container once
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();

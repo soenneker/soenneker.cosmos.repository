@@ -45,11 +45,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         await DeleteIds(ids, delayMs, useQueue, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask DeleteIds(
-        List<IdPartitionPair> ids,
-        double? delayMs = null,
-        bool useQueue = false,
-        CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         if (_log)
         {

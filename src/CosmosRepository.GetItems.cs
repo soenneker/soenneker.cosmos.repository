@@ -31,22 +31,26 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return await GetItems(query, delayMs, cancellationToken).NoSync();
     }
 
-    public async ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> documentIds, CancellationToken cancellationToken = default)
+    public async ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> documentIds, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
-        query = query.Where(c => documentIds.Contains(c.DocumentId));
+        if (documentIds.Count == 0)
+            return [];
 
-        return await GetItems(query, cancellationToken: cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+
+        FeedResponse<TDocument>? response = await container.ReadManyItemsAsync<TDocument>(
+            documentIds.Select(id => (id, new PartitionKey(id))).ToList(), null,
+            cancellationToken
+        ).NoSync();
+
+        return response.Resource.ToList();
     }
 
-    public async ValueTask<List<TDocument>?> GetAllByIdNamePairs(IEnumerable<IdNamePair> pairs, CancellationToken cancellationToken = default)
+    public ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default)
     {
-        IEnumerable<string> ids = pairs.Select(c => c.Id);
+        List<string> documentIds = pairs.Select(pair => pair.Id).ToList();
 
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken).NoSync();
-        query = query.Where(c => ids.Contains(c.Id));
-
-        return await GetItems(query, cancellationToken: cancellationToken).NoSync();
+        return GetAllByDocumentIds(documentIds, cancellationToken);
     }
 
     public ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default)
@@ -87,7 +91,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public ValueTask<List<string>> GetPartitionKeys(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<string> idQueryable = query.Select(d => d.PartitionKey);
+        IQueryable<string> idQueryable = query.Select(d => d.PartitionKey).Distinct();
 
         return GetItems(idQueryable, delayMs, cancellationToken);
     }

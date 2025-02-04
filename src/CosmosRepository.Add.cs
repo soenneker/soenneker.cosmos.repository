@@ -28,11 +28,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return InternalAddItem(document, useQueue, excludeResponse, cancellationToken);
     }
 
-    public virtual async ValueTask<List<TDocument>> AddItems(
-        List<TDocument> documents,
-        double? delayMs = null,
-        bool useQueue = false,
-        bool excludeResponse = false,
+    public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
         if (_log)

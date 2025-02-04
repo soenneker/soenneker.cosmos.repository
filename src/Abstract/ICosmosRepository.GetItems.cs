@@ -31,10 +31,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<List<TDocument>> GetAllByDocumentIds(IEnumerable<string> ids, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> ids, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<List<TDocument>?> GetAllByIdNamePairs(IEnumerable<IdNamePair> pairs, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// <inheritdoc cref="GetItems(string, double?, CancellationToken)"/> <para/>

@@ -14,11 +14,7 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public async ValueTask<List<TDocument>> PatchItems(
-        List<TDocument> documents,
-        List<PatchOperation> operations,
-        double? delayMs = null,
-        bool useQueue = false,
+    public async ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
         // Precompute delay once
@@ -73,7 +69,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             //Logger.LogInformation(response.RequestCharge.ToString());
             updatedDocument = response.Resource;
         }
-        
+
         return updatedDocument;
     }
 }

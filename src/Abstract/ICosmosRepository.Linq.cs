@@ -3,13 +3,13 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos;
 using Soenneker.Constants.Data;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
-    /// <inheritdoc cref="BuildQueryable{T}"/>
     [Pure]
     ValueTask<IQueryable<TDocument>> BuildQueryable(CancellationToken cancellationToken = default);
 
@@ -18,6 +18,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     [Pure]
     ValueTask<IQueryable<T>> BuildQueryable<T>(CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
 
     ///<inheritdoc cref="BuildPagedQueryable{T}"/>
     [Pure]

@@ -19,15 +19,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public ValueTask<TDocument> UpdateItem(TDocument item, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
-       return UpdateItem(item.Id, item, useQueue, excludeResponse, cancellationToken);
+        return UpdateItem(item.Id, item, useQueue, excludeResponse, cancellationToken);
     }
 
     // Avoids container lookup per item, thus not using UpdateItem
-    public async ValueTask<List<TDocument>> UpdateItems(
-        List<TDocument> documents,
-        double? delayMs = null,
-        bool useQueue = false,
-        bool excludeResponse = false,
+    public async ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
         // Fetch the container once
@@ -64,6 +60,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                     if (AuditEnabled)
                         await CreateAuditItem(EventType.Update, item.Id, item, token).NoSync();
+
                 }, cancellationToken).NoSync();
             }
             else
@@ -89,12 +86,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return documents;
     }
 
-    public async ValueTask<TDocument> UpdateItem(
-        string id,
-        TDocument item,
-        bool useQueue = false,
-        bool excludeResponse = false,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -125,13 +117,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 // Perform audit within the queued task
                 if (AuditEnabled)
                     await CreateAuditItem(EventType.Update, id, item, token).NoSync();
-
             }, cancellationToken).NoSync();
 
             return item;
         }
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+
         ItemResponse<TDocument>? response = await container.ReplaceItemAsync(
             item,
             documentId,
