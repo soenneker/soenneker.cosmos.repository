@@ -38,6 +38,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         query = query.Where(c => c.PartitionKey == partitionKey);
 
-        return await Exists(query, cancellationToken);
+        return await Exists(query, cancellationToken).NoSync();
     }
 }
