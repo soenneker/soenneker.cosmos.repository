@@ -1,11 +1,9 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
-using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 
 namespace Soenneker.Cosmos.Repository;
@@ -23,13 +21,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
-        int count = await query
-            .Select(c => c.Id)
-            .Take(1)
-            .CountAsync(cancellationToken)
-            .NoSync();
+        IQueryable<string> newQuery = query.Select(c => c.Id);
+        newQuery = newQuery.Take(1);
 
-        return count > 0;
+        string? id = await GetItem(newQuery, cancellationToken).NoSync();
+
+        return id != null;
     }
 
     public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
