@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
@@ -17,29 +16,6 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public async ValueTask<bool> GetExists(string id, CancellationToken cancellationToken = default)
-    {
-        (string partitionKey, string documentId) = id.ToSplitId();
-
-        TDocument? doc = await GetItem(documentId, partitionKey, cancellationToken).NoSync();
-
-        return doc != null;
-    }
-
-    public async ValueTask<bool> GetExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
-    {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
-
-        int count = await query
-            .Where(c => c.PartitionKey == partitionKey)
-            .Select(c => c.Id) // Select only Id to minimize RU cost
-            .Take(1) // Ensures Cosmos stops after finding the first match
-            .CountAsync(cancellationToken)
-            .NoSync();
-
-        return count > 0;
-    }
-
     public virtual ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();

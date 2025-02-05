@@ -7,12 +7,6 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
-    [Pure]
-    ValueTask<bool> GetExists(string id, CancellationToken cancellationToken = default);
-
-    [Pure]
-    ValueTask<bool> GetExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Get one item by Id (partition id and document id, or one guid if they're the same) <para/>
     /// Will not throw.

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -48,7 +49,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<int> Count(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken: cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
         return await Count(query, cancellationToken).NoSync();
     }
@@ -62,11 +63,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> Any(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
-        int count = await query.Take(1).CountAsync(cancellationToken).NoSync();
-
-        return count > 0;
+        return await Exists(query, cancellationToken).NoSync();
     }
 
     public async ValueTask<bool> None(CancellationToken cancellationToken = default)
