@@ -37,12 +37,12 @@
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
         <PackageReference Include="Soenneker.Constants.Data" Version="3.0.519" />
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1752" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1753" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="3.0.9" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1987" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.1988" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.555" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.560" />
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1955" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1957" />
         <PackageReference Include="Soenneker.Utils.Json" Version="3.0.2018" />
         <PackageReference Include="Soenneker.Utils.Method" Version="3.0.426" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.1282" />
