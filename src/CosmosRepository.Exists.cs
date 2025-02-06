@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.ValueTask;
@@ -31,7 +30,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         query = query.Where(c => c.PartitionKey == partitionKey);
 

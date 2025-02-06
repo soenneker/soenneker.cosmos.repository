@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Extensions.String;
@@ -25,7 +24,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
 
         query = query.Where(c => c.PartitionKey == partitionKey);
         query = query.Take(1);
@@ -64,7 +63,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.OrderBy(x => x.CreatedAt);
         query = query.Take(1);
 
@@ -73,7 +72,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.OrderByDescending(x => x.CreatedAt);
         query = query.Take(1);
 
