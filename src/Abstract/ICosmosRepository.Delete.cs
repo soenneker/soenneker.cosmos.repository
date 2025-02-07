@@ -22,7 +22,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
 
     ValueTask DeleteItems(IQueryable<TDocument> query, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
+    ValueTask DeleteItemsParallel(IQueryable<TDocument> query, int maxConcurrency, double? delayMs = null, CancellationToken cancellationToken = default);
+
     ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
+
+    ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency, CancellationToken cancellationToken = default);
 
     ValueTask DeleteCreatedAtBetween(DateTime startAt, DateTime endAt, CancellationToken cancellationToken = default);
 }

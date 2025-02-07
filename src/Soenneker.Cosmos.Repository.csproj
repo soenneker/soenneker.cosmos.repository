@@ -36,15 +36,16 @@
         <None Include="..\README.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
-        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.521" />
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1772" />
-        <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="3.0.11" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.2010" />
-        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.558" />
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.566" />
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1957" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="3.0.2038" />
+        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="3.0.1" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="3.0.524" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.1774" />
+        <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="3.0.15" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.2014" />
+        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.562" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.567" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.1960" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="3.0.2044" />
         <PackageReference Include="Soenneker.Utils.Method" Version="3.0.428" />
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.1299" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.1302" />
     </ItemGroup>
 </Project>
