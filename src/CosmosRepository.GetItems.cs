@@ -112,6 +112,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             while (iterator.HasMoreResults)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
                 results.AddRange(response);
 
@@ -122,6 +124,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             while (iterator.HasMoreResults)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
                 results.AddRange(response);
             }

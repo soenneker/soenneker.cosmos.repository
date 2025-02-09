@@ -30,6 +30,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             foreach (TDocument item in documents)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 item.Id = await InternalAddItem(item, container, useQueue, excludeResponse, cancellationToken)
                     .NoSync();
                 await Task.Delay(timeSpanDelay, cancellationToken)
@@ -40,6 +42,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             foreach (TDocument item in documents)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 item.Id = await InternalAddItem(item, container, useQueue, excludeResponse, cancellationToken)
                     .NoSync();
             }
@@ -67,6 +71,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             list.Add(async () =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 item.Id = await InternalAddItem(item, container, false, excludeResponse, cancellationToken)
                     .NoSync();
             });

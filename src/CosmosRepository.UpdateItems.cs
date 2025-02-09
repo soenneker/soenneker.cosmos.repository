@@ -31,6 +31,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         for (var i = 0; i < documents.Count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             TDocument item = documents[i];
 
             if (_log)
@@ -93,6 +95,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             tasks.Add(async () =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
                     TDocument item = documents[index];

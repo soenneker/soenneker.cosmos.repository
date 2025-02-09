@@ -77,6 +77,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             foreach (IdPartitionPair id in ids)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 await DeleteItem(id.Id, id.PartitionKey, useQueue, cancellationToken)
                     .NoSync();
                 await Task.Delay(timeSpanDelay.Value, cancellationToken)
@@ -87,6 +89,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             foreach (IdPartitionPair id in ids)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 await DeleteItem(id.Id, id.PartitionKey, useQueue, cancellationToken)
                     .NoSync();
             }
@@ -113,6 +117,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             list.Add(async () =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 await DeleteItem(id.Id, id.PartitionKey, false, cancellationToken)
                     .NoSync();
             });

@@ -24,6 +24,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             foreach (TDocument item in documents)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
                 await Task.Delay(timespanDelay.Value, cancellationToken).NoSync();
             }
@@ -32,6 +34,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             foreach (TDocument item in documents)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
             }
         }
