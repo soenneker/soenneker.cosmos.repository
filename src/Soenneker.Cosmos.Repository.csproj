@@ -36,14 +36,14 @@
         <None Include="..\README.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
-        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="3.0.159" />
+        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="3.0.160" />
         <PackageReference Include="Soenneker.Constants.Data" Version="3.0.597" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="3.0.2151" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="3.0.136" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="3.0.2371" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="3.0.675" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="3.0.679" />
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.2132" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="3.0.2133" />
         <PackageReference Include="Soenneker.Utils.Json" Version="3.0.2331" />
         <PackageReference Include="Soenneker.Utils.Method" Version="3.0.437" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="2.1.1587" />

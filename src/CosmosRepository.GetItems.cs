@@ -1,15 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.Utils.Delay;
 using Soenneker.Utils.Method;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -117,7 +118,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
                 results.AddRange(response);
 
-                await Task.Delay(timeSpanDelay, cancellationToken).NoSync();
+                await DelayUtil.Delay(timeSpanDelay, null, cancellationToken).NoSync();
             }
         }
         else

@@ -12,6 +12,7 @@ using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.Utils.Delay;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 
@@ -24,8 +25,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         CancellationToken cancellationToken = default)
     {
         // Fetch the container once
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
-            .NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         TimeSpan? timespanDelay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
@@ -51,37 +51,34 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 await _backgroundQueue.QueueValueTask(async token =>
                                       {
-                                          await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token)
-                                                         .NoSync();
+                                          await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
 
                                           if (AuditEnabled)
-                                              await CreateAuditItem(EventType.Update, item.Id, item, token)
-                                                  .NoSync();
+                                              await CreateAuditItem(EventType.Update, item.Id, item, token).NoSync();
                                       }, cancellationToken)
                                       .NoSync();
             }
             else
             {
-                ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationToken)
-                                                                   .NoSync();
+                ItemResponse<TDocument>? response =
+                    await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationToken).NoSync();
 
                 if (AuditEnabled)
-                    await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken)
-                        .NoSync();
+                    await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken).NoSync();
 
                 // Update the document in the original list
                 documents[i] = response.Resource ?? item;
             }
 
             if (timespanDelay.HasValue)
-                await Task.Delay(timespanDelay.Value, cancellationToken)
-                          .NoSync();
+                await DelayUtil.Delay(timespanDelay.Value, null, cancellationToken).NoSync();
         }
 
         return documents;
     }
 
-    public async ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false, CancellationToken cancellationToken = default)
+    public async ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
+        CancellationToken cancellationToken = default)
     {
         // Fetch the container once
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
@@ -115,13 +112,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                     // Perform the update operation
                     ItemResponse<TDocument>? response = await container.ReplaceItemAsync(
-                        item, documentId, new PartitionKey(partitionKey), options, cancellationToken
-                    ).NoSync();
+                                                                           item, documentId, new PartitionKey(partitionKey), options, cancellationToken)
+                                                                       .NoSync();
 
                     if (AuditEnabled)
                     {
-                        await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken)
-                            .NoSync();
+                        await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken).NoSync();
                     }
 
                     // Update the document in the original list safely
