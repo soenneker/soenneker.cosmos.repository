@@ -1,24 +1,24 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Audit;
 using Soenneker.Documents.Document;
-using Soenneker.Enums.EventType;
+using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public AuditDocument BuildDbEventAuditRecord(EventType eventType, string entityId, object? entity, string? userId)
+    public AuditDocument BuildDbEventAuditRecord(CrudEventType eventType, string entityId, object? entity, string? userId)
     {
         // The PartitionKey of the AuditRow is the Document Id of the target entity
         string partitionKey = entityId.ToSplitId().DocumentId;
@@ -38,7 +38,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return audit;
     }
 
-    public ValueTask CreateAuditItem(EventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default)
+    public ValueTask CreateAuditItem(CrudEventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default)
     {
         string? userId = _userContext.GetIdSafe();
 

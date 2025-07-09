@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Soenneker.ConcurrentProcessing.Executor;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
-using Soenneker.Enums.EventType;
+using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -54,7 +54,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                           await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
 
                                           if (AuditEnabled)
-                                              await CreateAuditItem(EventType.Update, item.Id, item, token).NoSync();
+                                              await CreateAuditItem(CrudEventType.Update, item.Id, item, token).NoSync();
                                       }, cancellationToken)
                                       .NoSync();
             }
@@ -64,7 +64,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                     await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationToken).NoSync();
 
                 if (AuditEnabled)
-                    await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken).NoSync();
+                    await CreateAuditItem(CrudEventType.Update, item.Id, item, cancellationToken).NoSync();
 
                 // Update the document in the original list
                 documents[i] = response.Resource ?? item;
@@ -117,7 +117,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                     if (AuditEnabled)
                     {
-                        await CreateAuditItem(EventType.Update, item.Id, item, cancellationToken).NoSync();
+                        await CreateAuditItem(CrudEventType.Update, item.Id, item, cancellationToken).NoSync();
                     }
 
                     // Update the document in the original list safely

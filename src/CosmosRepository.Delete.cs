@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.ConcurrentProcessing.Executor;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdPartitionPair;
-using Soenneker.Enums.EventType;
+using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
 using Soenneker.Utils.Method;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -156,7 +156,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         string entityId = documentId.AddPartitionKey(partitionKey);
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Delete, entityId, cancellationToken: cancellationToken).NoSync();
+        {
+            await CreateAuditItem(CrudEventType.Delete, entityId, cancellationToken: cancellationToken).NoSync();
+        }
     }
 
     public virtual async ValueTask DeleteCreatedAtBetween(DateTime startAt, DateTime endAt, CancellationToken cancellationToken = default)

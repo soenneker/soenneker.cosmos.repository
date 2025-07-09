@@ -1,23 +1,24 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
-using Soenneker.Enums.EventType;
+using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
+    public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false,
+        CancellationToken cancellationToken = default)
     {
         if (_log)
         {
@@ -42,31 +43,29 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async token =>
                                   {
-                                      Microsoft.Azure.Cosmos.Container container = await Container(token)
-                                          .NoSync();
+                                      Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
-                                      _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token)
-                                                         .NoSync();
+                                      _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync();
                                   }, cancellationToken)
                                   .NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
-                .NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
-                               .NoSync();
+            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Create, document.Id, document, cancellationToken)
-                .NoSync();
+        {
+            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken).NoSync();
+        }
 
         return document.Id;
     }
 
-    private async ValueTask<string> InternalAddItem(TDocument document, Microsoft.Azure.Cosmos.Container container, bool useQueue, bool excludeResponse, CancellationToken cancellationToken)
+    private async ValueTask<string> InternalAddItem(TDocument document, Microsoft.Azure.Cosmos.Container container, bool useQueue, bool excludeResponse,
+        CancellationToken cancellationToken)
     {
         if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
             throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
@@ -78,22 +77,21 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async token =>
-                                  {
-                                      _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token)
-                                                         .NoSync();
-                                  }, cancellationToken)
-                                  .NoSync();
+            await _backgroundQueue
+                  .QueueValueTask(
+                      async token => { _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync(); },
+                      cancellationToken)
+                  .NoSync();
         }
         else
         {
-            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
-                               .NoSync();
+            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
         }
 
         if (AuditEnabled)
-            await CreateAuditItem(EventType.Create, document.Id, document, cancellationToken)
-                .NoSync();
+        {
+            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken).NoSync();
+        }
 
         return document.Id;
     }
