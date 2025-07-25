@@ -1,7 +1,9 @@
 ﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
+using Soenneker.Dtos.RequestDataOptions;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
@@ -11,6 +13,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Cosmos.Repository.Abstract;
+using Soenneker.Dtos.Filters.ExactMatch;
+using Soenneker.Dtos.Filters.Range;
+using Soenneker.Dtos.Options.OrderBy;
+using Soenneker.Enums.SortDirections;
+using Soenneker.Extensions.IQueryables;
+using Soenneker.Extensions.String;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -67,6 +76,67 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         return GetItems<TDocument>(queryDefinition, delayMs, cancellationToken);
+    }
+
+    public virtual async ValueTask<(List<TDocument> items, int? totalCount)> GetItems(RequestDataOptions options, CancellationToken cancellationToken = default)
+    {
+        IQueryable<TDocument> query = await BuildQueryable(cancellationToken: cancellationToken).NoSync();
+
+        // 1. Exact match filters
+        if (options.Filters is { Count: > 0 })
+        {
+            foreach (ExactMatchFilter filter in options.Filters)
+            {
+                query = query.WhereDynamicEquals(filter.Field, filter.Value);
+            }
+        }
+
+        // 2. Range filters
+        if (options.RangeFilters is { Count: > 0 })
+        {
+            foreach (RangeFilter range in options.RangeFilters)
+            {
+                query = query.WhereDynamicRange(range);
+            }
+        }
+
+        // 3. Search
+        if (options.Search.HasContent() && options.SearchFields is { Count: > 0 })
+        {
+            query = query.WhereDynamicSearch(options.Search, options.SearchFields);
+        }
+
+        // 4. Sorting
+        if (options.OrderBy is { Count: > 0 })
+        {
+            var first = true;
+            foreach (OrderByOption order in options.OrderBy)
+            {
+                query = first
+                    ? query.OrderByDynamic(order.Field, order.Direction == SortDirection.Desc)
+                    : ((IOrderedQueryable<TDocument>)query).ThenByDynamic(order.Field, order.Direction == SortDirection.Desc);
+
+                first = false;
+            }
+        }
+
+        // 5. Paging
+        if (options.Skip.HasValue)
+            query = query.Skip(options.Skip.Value);
+
+        if (options.Take.HasValue)
+            query = query.Take(options.Take.Value);
+
+        // 6. Count (optional)
+        int? totalCount = null;
+
+        if (options.IncludeCount == true)
+            totalCount = await query.CountAsync(cancellationToken).NoSync();
+
+        // 7. Execute final query
+        List<TDocument> items = await GetItems(query, cancellationToken: cancellationToken).NoSync();
+
+        return (items, totalCount);
     }
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default)
