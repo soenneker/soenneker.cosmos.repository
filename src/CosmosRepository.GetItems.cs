@@ -82,58 +82,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         IQueryable<TDocument> query = await BuildQueryable(cancellationToken: cancellationToken).NoSync();
 
-        // 1. Exact match filters
-        if (options.Filters is { Count: > 0 })
-        {
-            foreach (ExactMatchFilter filter in options.Filters)
-            {
-                query = query.WhereDynamicEquals(filter.Field, filter.Value);
-            }
-        }
-
-        // 2. Range filters
-        if (options.RangeFilters is { Count: > 0 })
-        {
-            foreach (RangeFilter range in options.RangeFilters)
-            {
-                query = query.WhereDynamicRange(range);
-            }
-        }
-
-        // 3. Search
-        if (options.Search.HasContent() && options.SearchFields is { Count: > 0 })
-        {
-            query = query.WhereDynamicSearch(options.Search, options.SearchFields);
-        }
-
-        // 4. Sorting
-        if (options.OrderBy is { Count: > 0 })
-        {
-            var first = true;
-            foreach (OrderByOption order in options.OrderBy)
-            {
-                query = first
-                    ? query.OrderByDynamic(order.Field, order.Direction == SortDirection.Desc)
-                    : ((IOrderedQueryable<TDocument>)query).ThenByDynamic(order.Field, order.Direction == SortDirection.Desc);
-
-                first = false;
-            }
-        }
-
-        // 5. Paging
-        if (options.Skip.HasValue)
-            query = query.Skip(options.Skip.Value);
-
-        if (options.Take.HasValue)
-            query = query.Take(options.Take.Value);
-
-        // 6. Count (optional)
+        query = query.AddRequestDataOptions(options);
+        
         int? totalCount = null;
 
         if (options.IncludeCount == true)
-            totalCount = await query.CountAsync(cancellationToken).NoSync();
+            totalCount = await Count(cancellationToken).NoSync();
 
-        // 7. Execute final query
         List<TDocument> items = await GetItems(query, cancellationToken: cancellationToken).NoSync();
 
         return (items, totalCount);
