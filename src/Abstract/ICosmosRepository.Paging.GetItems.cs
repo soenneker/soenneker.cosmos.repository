@@ -11,13 +11,13 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     [Pure]
-    ValueTask<(List<TDocument>, string?)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
+    ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
     /// <remarks>
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>
     [Pure]
-    ValueTask<(List<TDocument>, string?)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken, CancellationToken cancellationToken = default);
+    ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Be sure to pass a query that was built via <see cref="BuildPagedQueryable"/>
@@ -27,4 +27,8 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </remarks>
     [Pure]
     ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
+        CancellationToken cancellationToken = default);
 }
