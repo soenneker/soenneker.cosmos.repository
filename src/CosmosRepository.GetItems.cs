@@ -49,9 +49,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         FeedResponse<TDocument>? response = await container.ReadManyItemsAsync<TDocument>(
-            documentIds.Select(id => (id, new PartitionKey(id))).ToList(), null,
-            cancellationToken
-        ).NoSync();
+                                                               documentIds.Select(id => (id, new PartitionKey(id))).ToList(), null, cancellationToken)
+                                                           .NoSync();
 
         return response.Resource.ToList();
     }
@@ -83,7 +82,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildQueryable(cancellationToken: cancellationToken).NoSync();
 
         query = query.AddRequestDataOptions(options);
-        
+
         int? totalCount = null;
 
         if (options.IncludeCount == true)
@@ -160,7 +159,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return results;
     }
 
-    public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
         query = query.Where(c => c.CreatedAt >= startAt && c.CreatedAt <= endAt);
