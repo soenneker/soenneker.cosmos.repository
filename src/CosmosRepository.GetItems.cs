@@ -1,9 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
-using Soenneker.Dtos.RequestDataOptions;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
@@ -13,13 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.Cosmos.Repository.Abstract;
-using Soenneker.Dtos.Filters.ExactMatch;
-using Soenneker.Dtos.Filters.Range;
-using Soenneker.Dtos.Options.OrderBy;
-using Soenneker.Enums.SortDirections;
-using Soenneker.Extensions.IQueryables;
-using Soenneker.Extensions.String;
 
 namespace Soenneker.Cosmos.Repository;
 
