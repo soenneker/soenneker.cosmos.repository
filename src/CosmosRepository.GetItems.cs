@@ -77,22 +77,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return GetItems<TDocument>(queryDefinition, delayMs, cancellationToken);
     }
 
-    public virtual async ValueTask<(List<TDocument> items, int? totalCount)> GetItems(RequestDataOptions options, CancellationToken cancellationToken = default)
-    {
-        IQueryable<TDocument> query = await BuildQueryable(cancellationToken: cancellationToken).NoSync();
-
-        query = query.AddRequestDataOptions(options);
-
-        int? totalCount = null;
-
-        if (options.IncludeCount == true)
-            totalCount = await Count(cancellationToken).NoSync();
-
-        List<TDocument> items = await GetItems(query, cancellationToken: cancellationToken).NoSync();
-
-        return (items, totalCount);
-    }
-
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();

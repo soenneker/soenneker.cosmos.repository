@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
-using Soenneker.Dtos.RequestDataOptions;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
@@ -58,12 +57,6 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     [Pure]
     ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets items using flexible RequestDataOptions for paging, sorting, and filtering.
-    /// </summary>
-    [Pure]
-    ValueTask<(List<TDocument> items, int? totalCount)> GetItems(RequestDataOptions options, CancellationToken cancellationToken = default);
 
     [Pure]
     ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default);

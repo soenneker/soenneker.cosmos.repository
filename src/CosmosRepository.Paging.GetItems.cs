@@ -22,7 +22,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken).NoSync();
 
         // OrderBy is required for paging
-        query = query.OrderBy(c => c.CreatedAt);
+        query = query.OrderByDescending(c => c.CreatedAt);
 
         // Directly return the result from GetItemsPaged
         return await GetItemsPaged(query, cancellationToken).NoSync();
