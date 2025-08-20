@@ -92,11 +92,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return e.MoveNext() ? e.Current : default;
     }
 
-    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken ct = default)
+    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(query, MethodUtil.Get());
 
-        using FeedIterator<T>? it = query.ToFeedIterator();
-        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, ct).NoSync();
+        using FeedIterator<T>? iterator = query.ToFeedIterator();
+        return await DrainIterator(iterator, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
+    }
+
+    public async ValueTask<List<TDocument>> GetItems(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
+    {
+        LogQuery<TDocument>(query, MethodUtil.Get());
+
+        using FeedIterator<TDocument>? iterator = query.ToFeedIterator();
+        return await DrainIterator(iterator, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
     }
 }

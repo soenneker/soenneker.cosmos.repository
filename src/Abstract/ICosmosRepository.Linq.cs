@@ -39,6 +39,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Will always return a non-null list. It may or may not have items.
+    /// </summary>
+    [Pure]
+    ValueTask<List<TDocument>> GetItems(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default);
+
     [Pure]
     ValueTask<int> Count(CancellationToken cancellationToken = default);
 
