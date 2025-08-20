@@ -31,41 +31,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     private async ValueTask<string> InternalAddItem(TDocument document, bool useQueue, bool excludeResponse, CancellationToken cancellationToken)
     {
-        if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
-            throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        ItemRequestOptions? options = null;
-
-        if (excludeResponse)
-            options = CosmosRequestOptions.ExcludeResponse;
-
-        if (useQueue)
-        {
-            await _backgroundQueue.QueueValueTask(async token =>
-                                  {
-                                      Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
-
-                                      _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync();
-                                  }, cancellationToken)
-                                  .NoSync();
-        }
-        else
-        {
-            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
-
-            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
-        }
-
-        if (AuditEnabled)
-        {
-            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken).NoSync();
-        }
-
-        return document.Id;
+        return await InternalAddItemWithContainer(document, container, useQueue, excludeResponse, cancellationToken);
     }
 
-    private async ValueTask<string> InternalAddItem(TDocument document, Microsoft.Azure.Cosmos.Container container, bool useQueue, bool excludeResponse,
-        CancellationToken cancellationToken)
+    private async ValueTask<string> InternalAddItemWithContainer(TDocument document, Microsoft.Azure.Cosmos.Container container, bool useQueue,
+        bool excludeResponse, CancellationToken cancellationToken)
     {
         if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
             throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
@@ -79,13 +51,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue
                   .QueueValueTask(
-                      async token => { _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync(); },
+                      async token => { await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync(); },
                       cancellationToken)
                   .NoSync();
         }
         else
         {
-            _ = await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
+            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
         }
 
         if (AuditEnabled)

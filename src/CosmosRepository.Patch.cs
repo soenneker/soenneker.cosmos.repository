@@ -52,7 +52,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
         }
 
-        (string? partitionKey, string? documentId) = id.ToSplitId();
+        (string partitionKey, string documentId) = id.ToSplitId();
 
         TDocument? updatedDocument = null;
 
@@ -61,7 +61,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await _backgroundQueue.QueueValueTask(async token =>
                                   {
-                                      Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+                                      Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
 
                                       _ = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token)
                                                          .NoSync();

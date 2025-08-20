@@ -30,13 +30,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
         }
 
-        // Parse ID into partition key and document ID
         (string partitionKey, string documentId) = id.ToSplitId();
 
         // Precompute request options
         ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
-        // UseQueue Logic
         if (useQueue)
         {
             await _backgroundQueue.QueueValueTask(async token =>

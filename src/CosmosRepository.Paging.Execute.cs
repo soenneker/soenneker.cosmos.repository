@@ -22,7 +22,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<T>? docs, string? newContinuationToken) = await GetItemsPaged(query, cancellationToken).NoSync();
+            (List<T> docs, string? newContinuationToken) = await GetItemsPaged(query, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -36,7 +36,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -50,7 +50,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         do
         {
-            (List<TDocument>? docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 

@@ -3,7 +3,6 @@ using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
-using Soenneker.Utils.Delay;
 using Soenneker.Utils.Method;
 using System;
 using System.Collections.Generic;
@@ -79,48 +78,25 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         LogQuery<T>(query, MethodUtil.Get());
 
-        using FeedIterator<T> iterator = query.ToFeedIterator();
+        using FeedIterator<T> iterator = query.Take(1).ToFeedIterator();
 
-        if (!iterator.HasMoreResults)
+        FeedResponse<T>? page = await iterator.ReadNextAsync(cancellationToken).NoSync();
+
+        if (page.Count == 0)
             return default;
 
-        FeedResponse<T>? response = await iterator.ReadNextAsync(cancellationToken).NoSync();
-        return response.FirstOrDefault();
+        if (page.Resource is IReadOnlyList<T> {Count: > 0} roList)
+            return roList[0];
+
+        using IEnumerator<T> e = page.Resource.GetEnumerator();
+        return e.MoveNext() ? e.Current : default;
     }
 
-    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default)
+    public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken ct = default)
     {
         LogQuery<T>(query, MethodUtil.Get());
 
-        using FeedIterator<T> iterator = query.ToFeedIterator();
-
-        var results = new List<T>();
-
-        if (delayMs.HasValue)
-        {
-            TimeSpan timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
-
-            while (iterator.HasMoreResults)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                FeedResponse<T>? response = await iterator.ReadNextAsync(cancellationToken).NoSync();
-                results.AddRange(response);
-
-                await DelayUtil.Delay(timeSpanDelay, null, cancellationToken).NoSync();
-            }
-        }
-        else
-        {
-            while (iterator.HasMoreResults)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                FeedResponse<T>? response = await iterator.ReadNextAsync(cancellationToken).NoSync();
-                results.AddRange(response);
-            }
-        }
-
-        return results;
+        using FeedIterator<T>? it = query.ToFeedIterator();
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, ct).NoSync();
     }
 }

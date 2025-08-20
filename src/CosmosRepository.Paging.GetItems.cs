@@ -49,7 +49,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
         FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        // Convert results
         return (response.ToList(), response.ContinuationToken);
     }
 

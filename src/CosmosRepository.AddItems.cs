@@ -33,7 +33,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItem(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
+                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
                 await DelayUtil.Delay(timeSpanDelay, null, cancellationToken).NoSync();
             }
         }
@@ -43,7 +43,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItem(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
+                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
             }
         }
 
@@ -70,7 +70,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItem(item, container, false, excludeResponse, cancellationToken).NoSync();
+                item.Id = await InternalAddItemWithContainer(item, container, false, excludeResponse, cancellationToken).NoSync();
             });
         }
 

@@ -99,7 +99,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
         var builder = new StringBuilder(queryText);
 
-        foreach ((string? name, object? value) in queryParameters)
+        foreach ((string name, object? value) in queryParameters)
         {
             string outputValue = value switch
             {

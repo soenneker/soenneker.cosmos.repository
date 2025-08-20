@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,12 +26,23 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        query = query.Where(c => c.PartitionKey == partitionKey);
-        query = query.Take(1);
+        var q = new QueryDefinition("SELECT TOP 1 * FROM c ORDER BY c._ts DESC");
 
-        return await GetItem(query, cancellationToken).NoSync();
+        using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
+        {
+            PartitionKey = new PartitionKey(partitionKey),
+            MaxItemCount = 1
+        });
+
+        FeedResponse<TDocument>? page = await it.ReadNextAsync(cancellationToken).NoSync();
+
+        if (page.Count == 0) 
+            return null;
+
+        using IEnumerator<TDocument> e = page.Resource.GetEnumerator();
+        return e.MoveNext() ? e.Current : null;
     }
 
     public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)
@@ -52,7 +64,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
             ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
-                cancellationToken: cancellationToken).NoSync();
+                                                                  cancellationToken: cancellationToken)
+                                                              .NoSync();
 
             return response.Resource;
         }
@@ -67,7 +80,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
         query = query.OrderBy(x => x.CreatedAt);
-        query = query.Take(1);
 
         return await GetItem(query, cancellationToken).NoSync();
     }
@@ -77,7 +89,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
         query = query.OrderByDescending(x => x.CreatedAt);
-        query = query.Take(1);
 
         return await GetItem(query, cancellationToken).NoSync();
     }

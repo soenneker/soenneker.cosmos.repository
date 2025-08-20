@@ -11,6 +11,9 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default);
 
     [Pure]
+    ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default);
+
+    [Pure]
     ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default);
 
     [Pure]

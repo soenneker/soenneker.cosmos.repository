@@ -15,7 +15,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Careful, could be heavy. You may want <see cref="GetAllPaged"/> if the number of items are large (due to app memory limitations)
     /// </summary>
-    [Pure] 
+    [Pure]
     ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -30,8 +30,17 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Not recommended - fans out across all partitions, so can be slow and expensive.
+    /// </summary>
+    /// <param name="ids"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [Pure]
     ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> ids, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs, CancellationToken cancellationToken = default);
 
     [Pure]
     ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default);
@@ -57,6 +66,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     [Pure]
     ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<List<IdPartitionPair>> GetIds(QueryDefinition queryDefinition, QueryRequestOptions? options = null, double? delayMs = null,
+        CancellationToken cancellationToken = default);
 
     [Pure]
     ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default);

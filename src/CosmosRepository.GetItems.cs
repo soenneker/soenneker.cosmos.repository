@@ -18,18 +18,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
-        query = query.Select(d => d);
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        var q = new QueryDefinition("SELECT * FROM c"); // full scan (use sparingly)
 
-        return await GetItems(query, delayMs, cancellationToken).NoSync();
+        using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(q);
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
     }
 
     public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
-        query = query.Where(c => c.PartitionKey == partitionKey);
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        var q = new QueryDefinition("SELECT * FROM c");
 
-        return await GetItems(query, delayMs, cancellationToken).NoSync();
+        using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
+        {
+            PartitionKey = new PartitionKey(partitionKey)
+        });
+
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
     }
 
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> documentIds, CancellationToken cancellationToken = default)
@@ -39,18 +45,67 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        FeedResponse<TDocument>? response = await container.ReadManyItemsAsync<TDocument>(
-                                                               documentIds.Select(id => (id, new PartitionKey(id))).ToList(), null, cancellationToken)
-                                                           .NoSync();
+        const int batchSize = 50;
+        var all = new List<TDocument>(documentIds.Count);
 
-        return response.Resource.ToList();
+        for (var i = 0; i < documentIds.Count; i += batchSize)
+        {
+            string[] slice = documentIds.Skip(i).Take(batchSize).ToArray();
+            string inParams = string.Join(",", Enumerable.Range(0, slice.Length).Select(j => $"@i{j}"));
+            var qd = new QueryDefinition($"SELECT * FROM c WHERE c.id IN ({inParams})");
+
+            for (var j = 0; j < slice.Length; j++)
+            {
+                qd.WithParameter($"@i{j}", slice[j]);
+            }
+
+            using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(qd);
+
+            while (it.HasMoreResults)
+            {
+                FeedResponse<TDocument>? page = await it.ReadNextAsync(cancellationToken).NoSync();
+                all.AddRange(page);
+            }
+        }
+
+        return all;
+    }
+
+    public async ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs, CancellationToken cancellationToken = default)
+    {
+        if (pairs.Count == 0)
+            return [];
+
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+
+        var items = new List<(string id, PartitionKey pk)>(pairs.Count);
+
+        foreach (IdPartitionPair p in pairs)
+        {
+            items.Add((p.Id, new PartitionKey(p.PartitionKey)));
+        }
+
+        FeedResponse<TDocument>? resp = await container.ReadManyItemsAsync<TDocument>(items, cancellationToken: cancellationToken).NoSync();
+        return resp.Resource.ToList();
     }
 
     public ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default)
     {
-        List<string> documentIds = pairs.Select(pair => pair.Id).ToList();
+        if (pairs.Count == 0)
+            return new ValueTask<List<TDocument>>([]);
 
-        return GetAllByDocumentIds(documentIds, cancellationToken);
+        List<IdPartitionPair> idPartitionPairs = [];
+
+        foreach (IdNamePair pair in pairs)
+        {
+            idPartitionPairs.Add(new IdPartitionPair
+            {
+                Id = pair.Id,
+                PartitionKey = pair.Id
+            });
+        }
+
+        return GetAllByIdPartitionPairs(idPartitionPairs, cancellationToken);
     }
 
     public ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default)
@@ -70,9 +125,42 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
+        var qd = new QueryDefinition("SELECT VALUE { id: c.id, partitionKey: c.partitionKey } FROM c");
+        return await GetIds(qd, null, delayMs, cancellationToken).NoSync();
+    }
 
-        return await GetIds(query, delayMs, cancellationToken).NoSync();
+    public async ValueTask<List<IdPartitionPair>> GetIds(QueryDefinition queryDefinition, QueryRequestOptions? options = null, double? delayMs = null,
+        CancellationToken cancellationToken = default)
+    {
+        LogQuery<IdPartitionPair>(queryDefinition, MethodUtil.Get());
+
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        using FeedIterator<IdPartitionPair>? it = container.GetItemQueryIterator<IdPartitionPair>(queryDefinition, requestOptions: options);
+
+        TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
+
+        var results = new List<IdPartitionPair>(128);
+
+        while (it.HasMoreResults)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            FeedResponse<IdPartitionPair>? page = await it.ReadNextAsync(cancellationToken).NoSync();
+
+            if (page.Count > 0)
+            {
+                results.EnsureCapacity(results.Count + page.Count);
+
+                foreach (IdPartitionPair? item in page)
+                {
+                    results.Add(item);
+                }
+
+                if (delay.HasValue)
+                    await DelayUtil.Delay(delay.Value, null, cancellationToken).NoSync();
+            }
+        }
+
+        return results;
     }
 
     public ValueTask<List<IdPartitionPair>> GetIds(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
@@ -84,9 +172,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        var q = new QueryDefinition("SELECT DISTINCT VALUE c.partitionKey FROM c");
 
-        return await GetPartitionKeys(query, delayMs, cancellationToken).NoSync();
+        using FeedIterator<string>? it = container.GetItemQueryIterator<string>(q);
+
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
     }
 
     public ValueTask<List<string>> GetPartitionKeys(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
@@ -102,33 +193,33 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        using FeedIterator<T> iterator = container.GetItemQueryIterator<T>(queryDefinition);
+        using FeedIterator<T>? it = container.GetItemQueryIterator<T>(queryDefinition);
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
+    }
 
-        var results = new List<T>();
+    private static async ValueTask<List<T>> DrainIterator<T>(FeedIterator<T> iterator, TimeSpan? interPageDelay, CancellationToken cancellationToken)
+    {
+        // Start small; we’ll grow with EnsureCapacity
+        var results = new List<T>(16);
 
-        if (delayMs.HasValue)
+        while (iterator.HasMoreResults)
         {
-            TimeSpan timeSpanDelay = TimeSpan.FromMilliseconds(delayMs.Value);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            while (iterator.HasMoreResults)
+            FeedResponse<T> page = await iterator.ReadNextAsync(cancellationToken).NoSync();
+
+            // Grow only as needed (avoids repeated reallocations)
+            if (page.Count > 0)
+                results.EnsureCapacity(results.Count + page.Count);
+
+            // Manual copy cheaper than AddRange’s IEnumerable path
+            foreach (T item in page)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
-                results.AddRange(response);
-
-                await DelayUtil.Delay(timeSpanDelay, null, cancellationToken).NoSync();
+                results.Add(item);
             }
-        }
-        else
-        {
-            while (iterator.HasMoreResults)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
 
-                FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
-                results.AddRange(response);
-            }
+            if (interPageDelay.HasValue && page.Count > 0)
+                await DelayUtil.Delay(interPageDelay.Value, null, cancellationToken).NoSync();
         }
 
         return results;
@@ -137,9 +228,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken).NoSync();
-        query = query.Where(c => c.CreatedAt >= startAt && c.CreatedAt <= endAt);
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        return await GetItems(query, delayMs, cancellationToken).NoSync();
+        QueryDefinition? q = new QueryDefinition("SELECT * FROM c WHERE c.createdAt >= @s AND c.createdAt <= @e").WithParameter("@s", startAt)
+            .WithParameter("@e", endAt);
+
+        using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(q);
+        return await DrainIterator(it, delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null, cancellationToken).NoSync();
     }
 }
