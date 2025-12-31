@@ -142,12 +142,16 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async token =>
-                                  {
-                                      using ResponseMessage? resp = await container.DeleteItemStreamAsync(documentId, pk, options, token).NoSync();
-                                      // Optionally check resp.StatusCode
-                                  }, ct)
-                                  .NoSync();
+            await _backgroundQueue.QueueValueTask(
+                (Container: container, DocumentId: documentId, Pk: pk, Options: options),
+                static async (s, token) =>
+                {
+                    using ResponseMessage resp = await s.Container
+                                                        .DeleteItemStreamAsync(s.DocumentId, s.Pk, s.Options, token)
+                                                        .NoSync();
+                    // optionally: resp.EnsureSuccessStatusCode();
+                },
+                ct).NoSync();
         }
         else
         {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.Container.Abstract;
@@ -12,7 +7,13 @@ using Soenneker.Cosmos.Repository.Abstract.Utils;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
+using Soenneker.Utils.MemoryStream.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
+using System;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -46,17 +47,19 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     private readonly IUserContext _userContext;
     private readonly IBackgroundQueue _backgroundQueue;
+    private readonly IMemoryStreamUtil _memoryStreamUtil;
 
     private readonly bool _log;
     private readonly bool _auditLog;
 
     protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
-        IUserContext userContext, IBackgroundQueue backgroundQueue)
+        IUserContext userContext, IBackgroundQueue backgroundQueue, IMemoryStreamUtil memoryStreamUtil)
     {
         _cosmosContainerUtil = cosmosContainerUtil;
         Logger = logger;
         _userContext = userContext;
         _backgroundQueue = backgroundQueue;
+        _memoryStreamUtil = memoryStreamUtil;
 
         _log = config.GetValue<bool>("Azure:Cosmos:Log");
         _auditLog = config.GetValue<bool>("Azure:Cosmos:AuditLog");

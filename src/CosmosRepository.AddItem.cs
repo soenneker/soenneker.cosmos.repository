@@ -10,8 +10,10 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Enums.JsonLibrary;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -31,7 +33,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     private async ValueTask<string> InternalAddItem(TDocument document, bool useQueue, bool excludeResponse, CancellationToken cancellationToken)
     {
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
         return await InternalAddItemWithContainer(document, container, useQueue, excludeResponse, cancellationToken);
     }
@@ -49,20 +52,32 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue
-                  .QueueValueTask(
-                      async token => { await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, token).NoSync(); },
-                      cancellationToken)
-                  .NoSync();
+            string pk = document.PartitionKey;
+            string json = JsonUtil.Serialize(document, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+            var partitionKey = new PartitionKey(pk);
+
+            await _backgroundQueue.QueueValueTask((container, partitionKey, json, options, _memoryStreamUtil), static async (s, token) =>
+                                  {
+                                      using MemoryStream ms = await s._memoryStreamUtil.Get(s.json, token)
+                                                                     .NoSync();
+
+                                      using ResponseMessage resp = await s.container.CreateItemStreamAsync(ms, s.partitionKey, s.options, token)
+                                                                          .NoSync();
+
+                                      resp.EnsureSuccessStatusCode();
+                                  }, cancellationToken)
+                                  .NoSync();
         }
         else
         {
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken).NoSync();
+            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
+                           .NoSync();
         }
 
         if (AuditEnabled)
         {
-            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken).NoSync();
+            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken)
+                .NoSync();
         }
 
         return document.Id;

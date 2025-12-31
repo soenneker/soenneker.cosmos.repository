@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using System.IO;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
@@ -11,6 +12,7 @@ using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Enums.JsonLibrary;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -37,29 +39,42 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async token =>
+            string itemJson = JsonUtil.Serialize(item, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+
+            await _backgroundQueue.QueueValueTask((Container: await Container(cancellationToken)
+                                          .NoSync(), // or pass `this` + resolve inside, your call
+                                      DocumentId: documentId, PartitionKey: partitionKey, Json: itemJson, Options: options, MemoryStreamUtil: _memoryStreamUtil,
+                                      AuditEnabled: AuditEnabled, FullId: id, Self: this), static async (s, token) =>
                                   {
-                                      Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
+                                      using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
+                                                                     .NoSync();
 
-                                      await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
+                                      using ResponseMessage resp = await s
+                                                                         .Container.ReplaceItemStreamAsync(ms, s.DocumentId, new PartitionKey(s.PartitionKey),
+                                                                             s.Options, token)
+                                                                         .NoSync();
 
-                                      // Perform audit within the queued task
-                                      if (AuditEnabled)
-                                          await CreateAuditItem(CrudEventType.Update, id, item, token).NoSync();
+                                      resp.EnsureSuccessStatusCode();
+
+                                      if (s.AuditEnabled)
+                                          await s.Self.CreateAuditItem(CrudEventType.Update, s.FullId, /* entity */ null, token)
+                                                 .NoSync();
                                   }, cancellationToken)
                                   .NoSync();
 
             return item;
         }
 
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
         ItemResponse<TDocument>? response = await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, cancellationToken)
                                                            .NoSync();
 
         if (AuditEnabled)
         {
-            await CreateAuditItem(CrudEventType.Update, id, item, cancellationToken).NoSync();
+            await CreateAuditItem(CrudEventType.Update, id, item, cancellationToken)
+                .NoSync();
         }
 
         return response.Resource ?? item;

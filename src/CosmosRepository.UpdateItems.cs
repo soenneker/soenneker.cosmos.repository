@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
@@ -8,6 +9,7 @@ using Soenneker.ConcurrentProcessing.Executor;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
+using Soenneker.Enums.JsonLibrary;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -49,14 +51,37 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             if (useQueue)
             {
-                await _backgroundQueue.QueueValueTask(async token =>
-                                      {
-                                          await container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, token).NoSync();
+                string itemId = item.Id;
+                string json = JsonUtil.Serialize(item, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+                var pk = new PartitionKey(partitionKey);
 
-                                          if (AuditEnabled)
-                                              await CreateAuditItem(CrudEventType.Update, item.Id, item, token).NoSync();
-                                      }, cancellationToken)
-                                      .NoSync();
+                // Snapshot AuditEnabled once if you want; or evaluate at execution time.
+                bool auditEnabled = AuditEnabled;
+
+                await _backgroundQueue.QueueValueTask(
+                    (Container: container,
+                        DocumentId: documentId,
+                        PartitionKey: pk,
+                        Json: json,
+                        Options: options,
+                        MemoryStreamUtil: _memoryStreamUtil,
+                        AuditEnabled: auditEnabled,
+                        Self: this,
+                        ItemId: itemId),
+                    static async (s, token) =>
+                    {
+                        using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token).NoSync();
+
+                        using ResponseMessage resp = await s.Container
+                                                            .ReplaceItemStreamAsync(ms, s.DocumentId, s.PartitionKey, s.Options, token)
+                                                            .NoSync();
+
+                        resp.EnsureSuccessStatusCode();
+
+                        if (s.AuditEnabled)
+                            await s.Self.CreateAuditItem(CrudEventType.Update, s.ItemId, /* entity */ null, token).NoSync();
+                    },
+                    cancellationToken).NoSync();
             }
             else
             {

@@ -4,6 +4,7 @@ using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Audit;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
+using Soenneker.Enums.JsonLibrary;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -11,6 +12,7 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,10 +54,26 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         Microsoft.Azure.Cosmos.Container container = await AuditContainer(cancellationToken).NoSync();
 
+        string json = JsonUtil.Serialize(auditItem, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+        var partitionKey = new PartitionKey(auditItem.PartitionKey);
+
         await _backgroundQueue.QueueValueTask(
-            async token =>
+            (Container: container,
+                PartitionKey: partitionKey,
+                Json: json,
+                Options: CosmosRequestOptions.ExcludeResponse,
+                MemoryStreamUtil: _memoryStreamUtil),
+            static async (s, token) =>
             {
-                await container.CreateItemAsync(auditItem, new PartitionKey(auditItem.PartitionKey), CosmosRequestOptions.ExcludeResponse, token).NoSync();
-            }, cancellationToken).NoSync();
+                using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
+                                               .NoSync();
+
+                using ResponseMessage resp = await s.Container
+                                                    .CreateItemStreamAsync(ms, s.PartitionKey, s.Options, token)
+                                                    .NoSync();
+
+                resp.EnsureSuccessStatusCode();
+            },
+            cancellationToken).NoSync();
     }
 }

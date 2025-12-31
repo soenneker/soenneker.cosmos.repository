@@ -5,6 +5,7 @@ using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
+using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
 using System.Collections.Generic;
@@ -27,8 +28,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
-                await DelayUtil.Delay(timespanDelay.Value, null, cancellationToken).NoSync();
+                await PatchItem(item.Id, operations, useQueue, cancellationToken)
+                    .NoSync();
+                await DelayUtil.Delay(timespanDelay.Value, null, cancellationToken)
+                               .NoSync();
             }
         }
         else
@@ -37,7 +40,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItem(item.Id, operations, useQueue, cancellationToken).NoSync();
+                await PatchItem(item.Id, operations, useQueue, cancellationToken)
+                    .NoSync();
             }
         }
 
@@ -59,19 +63,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         // TODO: we should probably move this to replace
         if (useQueue)
         {
-            await _backgroundQueue.QueueValueTask(async token =>
-                                  {
-                                      Microsoft.Azure.Cosmos.Container container = await Container(token).NoSync();
+            // Snapshot ops so we don't retain the caller's List/backing array (no serialize/deserialize)
+            PatchOperation[] ops = operations.Count == 0 ? [] : operations.ToArray();
 
-                                      _ = await container.PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, null, token)
+            await _backgroundQueue.QueueValueTask((Self: this, PartitionKey: partitionKey, DocumentId: documentId, Ops: ops), static async (s, token) =>
+                                  {
+                                      Microsoft.Azure.Cosmos.Container container = await s.Self.Container(token)
+                                                                                          .NoSync();
+
+                                      _ = await container.PatchItemAsync<TDocument>(s.DocumentId, new PartitionKey(s.PartitionKey), s.Ops, requestOptions: null,
+                                                             cancellationToken: token)
                                                          .NoSync();
-                                      //Logger.LogInformation(response.RequestCharge.ToString());
                                   }, cancellationToken)
                                   .NoSync();
         }
         else
         {
-            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+                .NoSync();
 
             ItemResponse<TDocument>? response = await container
                                                       .PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations,
