@@ -106,7 +106,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         {
             string outputValue = value switch
             {
-                string or DateTime => $"\"{value}\"",
+                string or DateTime or DateTimeOffset => $"\"{value}\"",
                 null => "null", // Explicitly handle null values
                 _ => Convert.ToString(value) ?? "null" // Ensure Convert.ToString doesn't return null
             };

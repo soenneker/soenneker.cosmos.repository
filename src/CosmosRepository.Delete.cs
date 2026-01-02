@@ -173,7 +173,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask DeleteCreatedAtBetween(DateTime startAt, DateTime endAt, CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 

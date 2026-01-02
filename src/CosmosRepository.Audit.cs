@@ -23,18 +23,20 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public AuditDocument BuildDbEventAuditRecord(CrudEventType eventType, string entityId, object? entity, string? userId)
     {
         // The PartitionKey of the AuditRow is the Document Id of the target entity
-        string partitionKey = entityId.ToSplitId().DocumentId;
+        string partitionKey = entityId.ToSplitId()
+                                      .DocumentId;
 
         var audit = new AuditDocument
         {
-            DocumentId = Guid.NewGuid().ToString(),
+            DocumentId = Guid.NewGuid()
+                             .ToString(),
             PartitionKey = partitionKey,
             EntityId = entityId,
             EntityType = typeof(TDocument).Name,
             Entity = entity,
             EventType = eventType,
             UserId = userId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
         return audit;
@@ -52,28 +54,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
         }
 
-        Microsoft.Azure.Cosmos.Container container = await AuditContainer(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await AuditContainer(cancellationToken)
+            .NoSync();
 
         string json = JsonUtil.Serialize(auditItem, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
         var partitionKey = new PartitionKey(auditItem.PartitionKey);
 
         await _backgroundQueue.QueueValueTask(
-            (Container: container,
-                PartitionKey: partitionKey,
-                Json: json,
-                Options: CosmosRequestOptions.ExcludeResponse,
-                MemoryStreamUtil: _memoryStreamUtil),
-            static async (s, token) =>
-            {
-                using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
-                                               .NoSync();
+                                  (Container: container, PartitionKey: partitionKey, Json: json, Options: CosmosRequestOptions.ExcludeResponse,
+                                      MemoryStreamUtil: _memoryStreamUtil), static async (s, token) =>
+                                  {
+                                      using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
+                                                                     .NoSync();
 
-                using ResponseMessage resp = await s.Container
-                                                    .CreateItemStreamAsync(ms, s.PartitionKey, s.Options, token)
-                                                    .NoSync();
+                                      using ResponseMessage resp = await s.Container.CreateItemStreamAsync(ms, s.PartitionKey, s.Options, token)
+                                                                          .NoSync();
 
-                resp.EnsureSuccessStatusCode();
-            },
-            cancellationToken).NoSync();
+                                      resp.EnsureSuccessStatusCode();
+                                  }, cancellationToken)
+                              .NoSync();
     }
 }

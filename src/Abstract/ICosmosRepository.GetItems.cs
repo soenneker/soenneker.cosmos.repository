@@ -65,7 +65,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Retrieves a list of items with createdAt between the parameters (inclusive, careful). Non-ordered.
     /// </summary>
     [Pure]
-    ValueTask<List<TDocument>> GetItemsBetween(DateTime startAt, DateTime endAt, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetItemsBetween(DateTimeOffset startAt, DateTimeOffset endAt, double? delayMs = null, CancellationToken cancellationToken = default);
 
     [Pure]
     ValueTask<List<IdPartitionPair>> GetIds(QueryDefinition queryDefinition, QueryRequestOptions? options = null, double? delayMs = null,
