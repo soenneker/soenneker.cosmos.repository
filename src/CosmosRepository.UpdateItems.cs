@@ -114,6 +114,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         for (var i = 0; i < documents.Count; i++)
         {
             int index = i; // Create a local copy of `i` to avoid closure issues
+            TDocument item = documents[index];
+            bool auditEnabled = AuditEnabled;
+            bool log = _log;
 
             tasks.Add(async () =>
             {
@@ -121,9 +124,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                 try
                 {
-                    TDocument item = documents[index];
-
-                    if (_log)
+                    if (log)
                     {
                         string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
                         Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
@@ -140,7 +141,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                                                            item, documentId, new PartitionKey(partitionKey), options, cancellationToken)
                                                                        .NoSync();
 
-                    if (AuditEnabled)
+                    if (auditEnabled)
                     {
                         await CreateAuditItem(CrudEventType.Update, item.Id, item, cancellationToken).NoSync();
                     }
@@ -150,7 +151,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error updating document with ID: {id}", documents[index].Id);
+                    Logger.LogError(ex, "Error updating document with ID: {id}", item.Id);
                 }
             });
         }

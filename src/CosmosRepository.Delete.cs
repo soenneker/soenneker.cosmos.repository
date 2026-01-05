@@ -115,11 +115,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (IdPartitionPair id in ids)
         {
+            string documentId = id.Id;
+            string partitionKey = id.PartitionKey;
+
             list.Add(async () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await DeleteItemWithContainer(container, id.Id, id.PartitionKey, false, cancellationToken).NoSync();
+                await DeleteItemWithContainer(container, documentId, partitionKey, false, cancellationToken).NoSync();
             });
         }
 

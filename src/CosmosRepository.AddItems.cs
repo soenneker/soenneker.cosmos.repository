@@ -66,11 +66,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         foreach (TDocument item in documents)
         {
+            TDocument document = item;
+            bool excludeResp = excludeResponse;
+
             list.Add(async () =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItemWithContainer(item, container, false, excludeResponse, cancellationToken).NoSync();
+                document.Id = await InternalAddItemWithContainer(document, container, false, excludeResp, cancellationToken).NoSync();
             });
         }
 
