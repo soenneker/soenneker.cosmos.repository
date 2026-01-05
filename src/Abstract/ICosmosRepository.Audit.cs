@@ -16,4 +16,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Always uses the queue
     /// </summary>
     ValueTask CreateAuditItem(CrudEventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Look up the user (if it exists), create an Audit document, and add it to the audit container.
+    /// Always uses the queue
+    /// </summary>
+    ValueTask CreateAuditItem(CrudEventType eventType, string entityId, string entityJson, CancellationToken cancellationToken = default);
 }

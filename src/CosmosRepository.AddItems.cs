@@ -23,7 +23,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 delayMs.GetValueOrDefault());
         }
 
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
         if (delayMs.HasValue)
         {
@@ -33,8 +34,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
-                await DelayUtil.Delay(timeSpanDelay, null, cancellationToken).NoSync();
+                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken)
+                    .NoSync();
+                await DelayUtil.Delay(timeSpanDelay, null, cancellationToken)
+                               .NoSync();
             }
         }
         else
@@ -43,7 +46,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken).NoSync();
+                item.Id = await InternalAddItemWithContainer(item, container, useQueue, excludeResponse, cancellationToken)
+                    .NoSync();
             }
         }
 
@@ -54,31 +58,36 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         CancellationToken cancellationToken = default)
     {
         if (_log)
-        {
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
-        }
 
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
         var executor = new ConcurrentProcessingExecutor(maxConcurrency, Logger);
 
-        var list = new List<Func<Task>>();
-
-        foreach (TDocument item in documents)
+        // Build state list (no per-item closures)
+        var states = new List<AddItemState>(documents.Count);
+        for (var i = 0; i < documents.Count; i++)
         {
-            TDocument document = item;
-            bool excludeResp = excludeResponse;
-
-            list.Add(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                document.Id = await InternalAddItemWithContainer(document, container, false, excludeResp, cancellationToken).NoSync();
-            });
+            states.Add(new AddItemState(Self: this, Container: container, Document: documents[i], ExcludeResponse: excludeResponse));
         }
 
-        await executor.Execute(list, cancellationToken).NoSync();
+        await executor.Execute(states, static async (s, ct) =>
+                      {
+                          ct.ThrowIfCancellationRequested();
+
+                          s.Document.Id = await s.Self.InternalAddItemWithContainer(s.Document, s.Container, useQueue: false,
+                                                     excludeResponse: s.ExcludeResponse, cancellationToken: ct)
+                                                 .NoSync();
+                      }, cancellationToken)
+                      .NoSync();
 
         return documents;
     }
+
+    private readonly record struct AddItemState(
+        CosmosRepository<TDocument> Self,
+        Microsoft.Azure.Cosmos.Container Container,
+        TDocument Document,
+        bool ExcludeResponse);
 }

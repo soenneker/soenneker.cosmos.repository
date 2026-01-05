@@ -45,40 +45,46 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
             throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
 
-        ItemRequestOptions? options = null;
-
-        if (excludeResponse)
-            options = CosmosRequestOptions.ExcludeResponse;
+        ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
         if (useQueue)
         {
+            // Snapshot everything we need up-front (no capturing document in the queued work item)
+            string id = document.Id;
             string pk = document.PartitionKey;
             string json = JsonUtil.Serialize(document, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
             var partitionKey = new PartitionKey(pk);
+            bool auditEnabled = AuditEnabled;
 
-            await _backgroundQueue.QueueValueTask((container, partitionKey, json, options, _memoryStreamUtil), static async (s, token) =>
-                                  {
-                                      using MemoryStream ms = await s._memoryStreamUtil.Get(s.json, token)
-                                                                     .NoSync();
+            await _backgroundQueue.QueueValueTask(
+                                      (Self: this, Container: container, PartitionKey: partitionKey, Json: json, Options: options,
+                                          MemoryStreamUtil: _memoryStreamUtil, AuditEnabled: auditEnabled, Id: id), static async (s, token) =>
+                                      {
+                                          using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
+                                                                         .NoSync();
 
-                                      using ResponseMessage resp = await s.container.CreateItemStreamAsync(ms, s.partitionKey, s.options, token)
-                                                                          .NoSync();
+                                          using ResponseMessage resp = await s.Container.CreateItemStreamAsync(ms, s.PartitionKey, s.Options, token)
+                                                                              .NoSync();
 
-                                      resp.EnsureSuccessStatusCode();
-                                  }, cancellationToken)
+                                          resp.EnsureSuccessStatusCode();
+
+                                          if (s.AuditEnabled)
+                                          {
+                                              await s.Self.CreateAuditItem(CrudEventType.Create, s.Id, s.Json, token)
+                                                     .NoSync();
+                                          }
+                                      }, cancellationToken)
                                   .NoSync();
+
+            return id;
         }
-        else
-        {
-            await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
-                           .NoSync();
-        }
+
+        await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
+                       .NoSync();
 
         if (AuditEnabled)
-        {
             await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken)
                 .NoSync();
-        }
 
         return document.Id;
     }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
+using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -52,44 +54,51 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         CancellationToken cancellationToken = default)
     {
         if (_log)
-        {
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
-        }
 
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        TDocument? updatedDocument = null;
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
-        // TODO: we should probably move this to replace
         if (useQueue)
         {
-            // Snapshot ops so we don't retain the caller's List/backing array (no serialize/deserialize)
+            // Snapshot ops so we don't retain caller's List/backing array.
             PatchOperation[] ops = operations.Count == 0 ? [] : operations.ToArray();
 
-            await _backgroundQueue.QueueValueTask((Self: this, PartitionKey: partitionKey, DocumentId: documentId, Ops: ops), static async (s, token) =>
-                                  {
-                                      Microsoft.Azure.Cosmos.Container container = await s.Self.Container(token)
-                                                                                          .NoSync();
+            bool auditEnabled = AuditEnabled;
 
-                                      _ = await container.PatchItemAsync<TDocument>(s.DocumentId, new PartitionKey(s.PartitionKey), s.Ops, requestOptions: null,
-                                                             cancellationToken: token)
-                                                         .NoSync();
-                                  }, cancellationToken)
+            await _backgroundQueue.QueueValueTask(
+                                      (Self: this, Container: container, PartitionKey: partitionKey, DocumentId: documentId, Ops: ops,
+                                          AuditEnabled: auditEnabled, FullId: id), static async (s, token) =>
+                                      {
+                                          // This will throw on non-success (Cosmos SDK throws CosmosException)
+                                          ItemResponse<TDocument> resp = await s
+                                                                               .Container.PatchItemAsync<TDocument>(s.DocumentId,
+                                                                                   new PartitionKey(s.PartitionKey), s.Ops, cancellationToken: token)
+                                                                               .NoSync();
+
+                                          // Audit only after success
+                                          if (s.AuditEnabled)
+                                          {
+                                              await s.Self.CreateAuditItem(CrudEventType.Update, s.FullId, cancellationToken: token)
+                                                     .NoSync();
+                                          }
+                                      }, cancellationToken)
                                   .NoSync();
+
+            return null;
         }
-        else
-        {
-            Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+
+        ItemResponse<TDocument> response = await container
+                                                 .PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations, requestOptions: null,
+                                                     cancellationToken: cancellationToken)
+                                                 .NoSync();
+
+        if (AuditEnabled)
+            await CreateAuditItem(CrudEventType.Update, id, response.Resource, cancellationToken)
                 .NoSync();
 
-            ItemResponse<TDocument>? response = await container
-                                                      .PatchItemAsync<TDocument>(documentId, new PartitionKey(partitionKey), operations,
-                                                          cancellationToken: cancellationToken)
-                                                      .NoSync();
-            //Logger.LogInformation(response.RequestCharge.ToString());
-            updatedDocument = response.Resource;
-        }
-
-        return updatedDocument;
+        return response.Resource;
     }
 }
