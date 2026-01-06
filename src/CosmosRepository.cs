@@ -10,6 +10,8 @@ using Soenneker.Utils.BackgroundQueue.Abstract;
 using Soenneker.Utils.MemoryStream.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -26,12 +28,14 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     /// Audit container that will store audit log for all entities.
     /// TODO: Perhaps need to make audit container available...
     /// </summary>
-    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer(CancellationToken cancellationToken = default) => _cosmosContainerUtil.Get("audits", cancellationToken);
+    private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer(CancellationToken cancellationToken = default) =>
+        _cosmosContainerUtil.Get("audits", cancellationToken);
 
     /// <summary>
     /// Cosmos DB container
     /// </summary>
-    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container(CancellationToken cancellationToken = default) => _cosmosContainerUtil.Get(ContainerName, cancellationToken);
+    protected ValueTask<Microsoft.Azure.Cosmos.Container> Container(CancellationToken cancellationToken = default) =>
+        _cosmosContainerUtil.Get(ContainerName, cancellationToken);
 
     /// <summary>
     /// Should we create audit records for this repository event?
@@ -97,23 +101,106 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     {
         string queryText = queryDefinition.QueryText;
 
-        // Materialize reversed query parameters to avoid deferred execution
-        (string Name, object Value)[] queryParameters = queryDefinition.GetQueryParameters().Reverse().ToArray();
+        IReadOnlyList<(string Name, object Value)> parameters = queryDefinition.GetQueryParameters();
 
-        var builder = new StringBuilder(queryText);
+        if (parameters.Count == 0)
+            return queryText;
 
-        foreach ((string name, object? value) in queryParameters)
+        // Build lookup (ordinal is correct for parameter tokens)
+        var map = new Dictionary<string, object?>(parameters.Count, StringComparer.Ordinal);
+
+        for (var i = 0; i < parameters.Count; i++)
         {
-            string outputValue = value switch
-            {
-                string or DateTime or DateTimeOffset => $"\"{value}\"",
-                null => "null", // Explicitly handle null values
-                _ => Convert.ToString(value) ?? "null" // Ensure Convert.ToString doesn't return null
-            };
-
-            builder.Replace(name, outputValue);
+            (string Name, object Value) p = parameters[i];
+            map[p.Name] = p.Value;
         }
 
-        return builder.ToString();
+        // Rough guess: output usually a bit longer because of quotes/"null"
+        var sb = new StringBuilder(queryText.Length + parameters.Count * 8);
+
+        for (var i = 0; i < queryText.Length; i++)
+        {
+            char c = queryText[i];
+
+            // Cosmos parameters typically start with '@'
+            if (c != '@')
+            {
+                sb.Append(c);
+                continue;
+            }
+
+            int start = i;
+            int j = i + 1;
+
+            while (j < queryText.Length)
+            {
+                char ch = queryText[j];
+                if (ch == '_' || char.IsLetterOrDigit(ch))
+                {
+                    j++;
+                    continue;
+                }
+
+                break;
+            }
+
+            // Just '@' by itself
+            if (j == start + 1)
+            {
+                sb.Append('@');
+                continue;
+            }
+
+            string token = queryText.Substring(start, j - start);
+
+            if (map.TryGetValue(token, out object? value))
+            {
+                AppendFormattedValue(sb, value);
+                i = j - 1; // skip token
+            }
+            else
+            {
+                // no replacement found
+                sb.Append(token);
+                i = j - 1;
+            }
+        }
+
+        return sb.ToString();
+
+        static void AppendFormattedValue(StringBuilder sb, object? value)
+        {
+            if (value is null)
+            {
+                sb.Append("null");
+                return;
+            }
+
+            switch (value)
+            {
+                case string s:
+                    sb.Append('"');
+                    sb.Append(s);
+                    sb.Append('"');
+                    return;
+
+                case DateTime dt:
+                    sb.Append('"');
+                    sb.Append(dt.ToString("O", CultureInfo.InvariantCulture));
+                    sb.Append('"');
+                    return;
+
+                case DateTimeOffset dto:
+                    sb.Append('"');
+                    sb.Append(dto.ToString("O", CultureInfo.InvariantCulture));
+                    sb.Append('"');
+                    return;
+
+                default:
+                    var str = Convert.ToString(value);
+                    sb.Append(str ?? "null");
+                    return;
+            }
+        }
     }
 }
