@@ -9,11 +9,11 @@ using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
 using Soenneker.Utils.MemoryStream.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
+using Soenneker.Utils.PooledStringBuilders;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -116,89 +116,96 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         }
 
         // Rough guess: output usually a bit longer because of quotes/"null"
-        var sb = new StringBuilder(queryText.Length + parameters.Count * 8);
+        var psb = new PooledStringBuilder(queryText.Length + parameters.Count * 8);
 
-        for (var i = 0; i < queryText.Length; i++)
+        try
         {
-            char c = queryText[i];
-
-            // Cosmos parameters typically start with '@'
-            if (c != '@')
+            for (var i = 0; i < queryText.Length; i++)
             {
-                sb.Append(c);
-                continue;
-            }
+                char c = queryText[i];
 
-            int start = i;
-            int j = i + 1;
-
-            while (j < queryText.Length)
-            {
-                char ch = queryText[j];
-                if (ch == '_' || char.IsLetterOrDigit(ch))
+                // Cosmos parameters typically start with '@'
+                if (c != '@')
                 {
-                    j++;
+                    psb.Append(c);
                     continue;
                 }
 
-                break;
+                int start = i;
+                int j = i + 1;
+
+                while (j < queryText.Length)
+                {
+                    char ch = queryText[j];
+                    if (ch == '_' || char.IsLetterOrDigit(ch))
+                    {
+                        j++;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                // Just '@' by itself
+                if (j == start + 1)
+                {
+                    psb.Append('@');
+                    continue;
+                }
+
+                string token = queryText.Substring(start, j - start);
+
+                if (map.TryGetValue(token, out object? value))
+                {
+                    AppendFormattedValue(ref psb, value);
+                    i = j - 1; // skip token
+                }
+                else
+                {
+                    // no replacement found
+                    psb.Append(token);
+                    i = j - 1;
+                }
             }
 
-            // Just '@' by itself
-            if (j == start + 1)
-            {
-                sb.Append('@');
-                continue;
-            }
-
-            string token = queryText.Substring(start, j - start);
-
-            if (map.TryGetValue(token, out object? value))
-            {
-                AppendFormattedValue(sb, value);
-                i = j - 1; // skip token
-            }
-            else
-            {
-                // no replacement found
-                sb.Append(token);
-                i = j - 1;
-            }
+            return psb.ToString();
+        }
+        finally
+        {
+            psb.Dispose();
         }
 
-        return sb.ToString();
-
-        static void AppendFormattedValue(StringBuilder sb, object? value)
+        static void AppendFormattedValue(ref PooledStringBuilder psb, object? value)
         {
             if (value is null)
             {
-                sb.Append("null");
+                psb.Append("null");
                 return;
             }
 
             switch (value)
             {
                 case string s:
-                    sb.Append('"');
-                    sb.Append(s);
-                    sb.Append('"');
+                    psb.Append('"');
+                    psb.Append(s);
+                    psb.Append('"');
                     return;
 
                 case DateTime dt:
-                    sb.Append('"');
-                    sb.Append(dt.ToString("O", CultureInfo.InvariantCulture));
-                    sb.Append('"');
+                    psb.Append('"');
+                    psb.Append(dt.ToString("O", CultureInfo.InvariantCulture));
+                    psb.Append('"');
                     return;
 
                 case DateTimeOffset dto:
-                    sb.Append('"');
-                    sb.Append(dto.ToString("O", CultureInfo.InvariantCulture));
-                    sb.Append('"');
+                    psb.Append('"');
+                    psb.Append(dto.ToString("O", CultureInfo.InvariantCulture));
+                    psb.Append('"');
                     return;
 
                 default:
                     var str = Convert.ToString(value);
-                    sb.Append(str ?? "null");
+                    psb.Append(str ?? "null");
                     return;
             }
         }
