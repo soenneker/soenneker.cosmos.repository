@@ -49,7 +49,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
         FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        return (response.ToList(), response.ContinuationToken);
+        // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
+        IReadOnlyList<TDocument> resource = response.Resource;
+        var items = resource as List<TDocument> ?? new List<TDocument>(resource);
+
+        return (items, response.ContinuationToken);
     }
 
     public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query,
@@ -61,7 +65,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<T> iterator = query.ToFeedIterator();
         FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        return (response.ToList(), response.ContinuationToken);
+        // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
+        IReadOnlyList<T> resource = response.Resource;
+        var items = resource as List<T> ?? new List<T>(resource);
+
+        return (items, response.ContinuationToken);
     }
 
     public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize,
