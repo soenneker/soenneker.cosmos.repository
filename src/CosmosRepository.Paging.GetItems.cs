@@ -50,8 +50,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
         // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
-        IReadOnlyList<TDocument> resource = response.Resource;
-        var items = resource as List<TDocument> ?? new List<TDocument>(resource);
+        IEnumerable<TDocument> resource = response.Resource;
+        List<TDocument> items = resource as List<TDocument> ?? [..resource];
 
         return (items, response.ContinuationToken);
     }
@@ -66,8 +66,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
         // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
-        IReadOnlyList<T> resource = response.Resource;
-        var items = resource as List<T> ?? new List<T>(resource);
+        IEnumerable<T> resource = response.Resource;
+        List<T> items = resource as List<T> ?? [..resource];
 
         return (items, response.ContinuationToken);
     }
