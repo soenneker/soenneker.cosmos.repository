@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.Container.Abstract;
@@ -14,6 +14,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -120,9 +122,13 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
         try
         {
-            for (var i = 0; i < queryText.Length; i++)
+            ReadOnlySpan<char> span = queryText.AsSpan();
+            ref char r0 = ref MemoryMarshal.GetReference(span);
+            int len = span.Length;
+
+            for (var i = 0; i < len; i++)
             {
-                char c = queryText[i];
+                char c = Unsafe.Add(ref r0, i);
 
                 // Cosmos parameters typically start with '@'
                 if (c != '@')
@@ -134,9 +140,9 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
                 int start = i;
                 int j = i + 1;
 
-                while (j < queryText.Length)
+                while (j < len)
                 {
-                    char ch = queryText[j];
+                    char ch = Unsafe.Add(ref r0, j);
                     if (ch == '_' || char.IsLetterOrDigit(ch))
                     {
                         j++;
@@ -153,7 +159,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
                     continue;
                 }
 
-                string token = queryText.Substring(start, j - start);
+                string token = span.Slice(start, j - start).ToString();
 
                 if (map.TryGetValue(token, out object? value))
                 {
