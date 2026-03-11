@@ -49,7 +49,7 @@
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2316" />
         <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2464" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.447" />
-        <PackageReference Include="Soenneker.Utils.PooledStringBuilders" Version="4.0.15" />
+        <PackageReference Include="Soenneker.Utils.PooledStringBuilders" Version="4.0.16" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1694" />
     </ItemGroup>
 </Project>
