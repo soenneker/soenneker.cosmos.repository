@@ -53,6 +53,6 @@
         <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2476" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.447" />
         <PackageReference Include="Soenneker.Utils.PooledStringBuilders" Version="4.0.16" />
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1700" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1708" />
     </ItemGroup>
 </Project>
