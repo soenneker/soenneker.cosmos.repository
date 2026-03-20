@@ -24,6 +24,8 @@ namespace Soenneker.Cosmos.Repository;
 /// <inheritdoc cref="ICosmosRepository{TDocument}"/>
 public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TDocument>, ICosmosRepositoryContext where TDocument : Document
 {
+    private const int _documentIdBatchSize = 50;
+
     private readonly ICosmosContainerUtil _cosmosContainerUtil;
 
     /// <summary>

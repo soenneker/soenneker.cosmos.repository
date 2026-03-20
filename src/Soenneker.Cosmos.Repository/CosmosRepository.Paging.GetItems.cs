@@ -19,39 +19,55 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         string? continuationToken = null, CancellationToken cancellationToken = default)
     {
         // Build the query with paging and sorting
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken)
+            .NoSync();
 
         // OrderBy is required for paging
-        query = query.OrderByDescending(c => c.CreatedAt);
+        query = query.OrderByDescending(static c => c.CreatedAt);
 
         // Directly return the result from GetItemsPaged
-        return await GetItemsPaged(query, cancellationToken).NoSync();
+        return await GetItemsPaged(query, cancellationToken)
+            .NoSync();
     }
 
     public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize,
         string? continuationToken, CancellationToken cancellationToken = default)
     {
-        // Logging only when enabled
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             string query = BuildQueryLogText(queryDefinition);
             Logger.LogDebug("-- COSMOS: {method} ({type}): pageSize: {pageSize}, continuationToken: {token}, Query: {query}", MethodUtil.Get(),
                 typeof(TDocument).Name, pageSize, continuationToken, query);
         }
 
-        // Set query request options
-        var requestOptions = new QueryRequestOptions {MaxItemCount = pageSize};
+        var requestOptions = new QueryRequestOptions
+        {
+            MaxItemCount = pageSize
+        };
 
-        // Fetch the container once
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
+            .NoSync();
 
-        // Create and execute the feed iterator
         using FeedIterator<TDocument> iterator = container.GetItemQueryIterator<TDocument>(queryDefinition, continuationToken, requestOptions);
-        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
-        IEnumerable<TDocument> resource = response.Resource;
-        List<TDocument> items = resource as List<TDocument> ?? [..resource];
+        if (!iterator.HasMoreResults)
+            return ([], null);
+
+        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken)
+                                                         .NoSync();
+
+        if (response.Count == 0)
+            return ([], response.ContinuationToken);
+
+        if (response.Resource is List<TDocument> list)
+            return (list, response.ContinuationToken);
+
+        var items = new List<TDocument>(response.Count);
+
+        foreach (TDocument item in response)
+        {
+            items.Add(item);
+        }
 
         return (items, response.ContinuationToken);
     }
@@ -63,17 +79,30 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             LogQuery<T>(query, MethodUtil.Get());
 
         using FeedIterator<T> iterator = query.ToFeedIterator();
-        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
 
-        // Avoid an extra list allocation/copy when the SDK already materializes a List<T>.
-        IEnumerable<T> resource = response.Resource;
-        List<T> items = resource as List<T> ?? [..resource];
+        if (!iterator.HasMoreResults)
+            return ([], null);
+
+        FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken)
+                                                 .NoSync();
+
+        if (response.Count == 0)
+            return ([], response.ContinuationToken);
+
+        if (response.Resource is List<T> list)
+            return (list, response.ContinuationToken);
+
+        var items = new List<T>(response.Count);
+        foreach (T item in response)
+        {
+            items.Add(item);
+        }
 
         return (items, response.ContinuationToken);
     }
 
-    public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize,
-        string? continuation, CancellationToken cancellationToken = default)
+    public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
+        CancellationToken cancellationToken = default)
     {
         return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, cancellationToken);
     }

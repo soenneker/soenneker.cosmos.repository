@@ -1,13 +1,11 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
-using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
 using System.Collections.Generic;

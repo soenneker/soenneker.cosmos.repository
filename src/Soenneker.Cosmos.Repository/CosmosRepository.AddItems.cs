@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Soenneker.ConcurrentProcessing.Executor;
 using Soenneker.Documents.Document;
-using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.Delay;
 using Soenneker.Utils.Method;

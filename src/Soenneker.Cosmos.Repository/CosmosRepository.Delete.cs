@@ -20,12 +20,11 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default)
+    public virtual ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = entityId.ToSplitId();
 
-        await DeleteItem(documentId, partitionKey, useQueue, cancellationToken)
-            .NoSync();
+        return DeleteItem(documentId, partitionKey, useQueue, cancellationToken);
     }
 
     public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
@@ -77,33 +76,21 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 delayMs.GetValueOrDefault());
         }
 
-        TimeSpan? timeSpanDelay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
+        TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
-        if (timeSpanDelay.HasValue)
+        foreach (IdPartitionPair id in ids)
         {
-            foreach (IdPartitionPair id in ids)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
 
-                await DeleteItemWithContainer(container, id.Id, id.PartitionKey, useQueue, cancellationToken)
-                    .NoSync();
+            await DeleteItemWithContainer(container, id.Id, id.PartitionKey, useQueue, cancellationToken)
+                .NoSync();
 
-                await DelayUtil.Delay(timeSpanDelay.Value, null, cancellationToken)
+            if (delay.HasValue)
+                await DelayUtil.Delay(delay.Value, null, cancellationToken)
                                .NoSync();
-            }
-        }
-        else
-        {
-            foreach (IdPartitionPair id in ids)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                await DeleteItemWithContainer(container, id.Id, id.PartitionKey, useQueue, cancellationToken)
-                    .NoSync();
-            }
         }
 
         if (_log)
@@ -122,31 +109,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
-        var states = new List<DeleteState>(ids.Count);
-        for (var i = 0; i < ids.Count; i++)
-        {
-            IdPartitionPair id = ids[i];
-            states.Add(new DeleteState(Self: this, Container: container, DocumentId: id.Id, PartitionKey: id.PartitionKey));
-        }
-
-        await executor.Execute(states, static async (s, ct) =>
+        await executor.Execute(ids, async (id, ct) =>
                       {
                           ct.ThrowIfCancellationRequested();
 
-                          await s.Self.DeleteItemWithContainer(s.Container, s.DocumentId, s.PartitionKey, useQueue: false, ct: ct)
-                                 .NoSync();
+                          await DeleteItemWithContainer(container, id.Id, id.PartitionKey, useQueue: false, ct: ct)
+                              .NoSync();
                       }, cancellationToken)
                       .NoSync();
 
         if (_log)
             Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
-
-    private readonly record struct DeleteState(
-        CosmosRepository<TDocument> Self,
-        Microsoft.Azure.Cosmos.Container Container,
-        string DocumentId,
-        string PartitionKey);
 
     public virtual async ValueTask DeleteItemWithContainer(Microsoft.Azure.Cosmos.Container container, string documentId, string partitionKey,
         bool useQueue = false, CancellationToken ct = default)
@@ -204,11 +178,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false, CancellationToken cancellationToken = default)
     {
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
-            .NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken)
-            .NoSync();
+        await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken).NoSync();
     }
 
     public virtual async ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
@@ -216,72 +188,85 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
-        QueryDefinition? q = new QueryDefinition("SELECT VALUE { id: c.id, pk: c.partitionKey } " + "FROM c WHERE c.createdAt >= @s AND c.createdAt <= @e")
-                             .WithParameter("@s", startAt)
-                             .WithParameter("@e", endAt);
+        QueryDefinition q = new QueryDefinition("SELECT VALUE { id: c.id, pk: c.partitionKey } FROM c WHERE c.createdAt >= @s AND c.createdAt <= @e")
+                            .WithParameter("@s", startAt)
+                            .WithParameter("@e", endAt);
 
-        using FeedIterator<IdPartitionPair>? it = container.GetItemQueryIterator<IdPartitionPair>(q);
+        using FeedIterator<IdPartitionPair> it = container.GetItemQueryIterator<IdPartitionPair>(q);
 
         var ids = new List<IdPartitionPair>(256);
 
         while (it.HasMoreResults)
         {
-            FeedResponse<IdPartitionPair>? page = await it.ReadNextAsync(cancellationToken)
-                                                          .NoSync();
+            FeedResponse<IdPartitionPair> page = await it.ReadNextAsync(cancellationToken)
+                                                         .NoSync();
             ids.EnsureCapacity(ids.Count + page.Count);
 
-            foreach (IdPartitionPair? p in page)
+            foreach (IdPartitionPair p in page)
             {
                 ids.Add(p);
             }
         }
 
-        // Prefer batched deletes by PK when ranges are large:
         await DeleteIdsBatched(ids, 100, cancellationToken)
             .NoSync();
     }
 
     public virtual async ValueTask DeleteIdsBatched(List<IdPartitionPair> ids, int batchSize = 100, CancellationToken cancellationToken = default)
     {
+        if (ids.Count == 0)
+            return;
+
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize));
+
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
-        // Group by PK to use TransactionalBatch
-        foreach (IGrouping<string, IdPartitionPair> group in ids.GroupBy(x => x.PartitionKey))
+        var buckets = new Dictionary<string, List<string>>(Math.Min(ids.Count, 256), StringComparer.Ordinal);
+
+        for (int i = 0; i < ids.Count; i++)
         {
-            var pk = new PartitionKey(group.Key);
-            var buffer = new List<string>(batchSize);
+            IdPartitionPair pair = ids[i];
 
-            foreach (IdPartitionPair item in group)
+            if (!buckets.TryGetValue(pair.PartitionKey, out List<string>? bucket))
             {
-                buffer.Add(item.Id);
-
-                if (buffer.Count == batchSize)
-                {
-                    await ExecuteDeleteBatch(container, pk, buffer, cancellationToken)
-                        .NoSync();
-                    buffer.Clear();
-                }
+                bucket = new List<string>(Math.Min(batchSize, 16));
+                buckets[pair.PartitionKey] = bucket;
             }
 
-            if (buffer.Count > 0)
-                await ExecuteDeleteBatch(container, pk, buffer, cancellationToken)
+            bucket.Add(pair.Id);
+        }
+
+        foreach (KeyValuePair<string, List<string>> kvp in buckets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            PartitionKey pk = new(kvp.Key);
+            List<string> bucket = kvp.Value;
+
+            for (int start = 0; start < bucket.Count; start += batchSize)
+            {
+                int count = Math.Min(batchSize, bucket.Count - start);
+
+                await ExecuteDeleteBatch(container, pk, bucket, start, count, cancellationToken)
                     .NoSync();
+            }
         }
     }
 
-    private static async ValueTask ExecuteDeleteBatch(Microsoft.Azure.Cosmos.Container container, PartitionKey partitionKey, List<string> ids,
-        CancellationToken cancellationToken)
+    private static async ValueTask ExecuteDeleteBatch(Microsoft.Azure.Cosmos.Container container, PartitionKey partitionKey, List<string> ids, int start,
+        int count, CancellationToken cancellationToken)
     {
         TransactionalBatch batch = container.CreateTransactionalBatch(partitionKey);
 
-        foreach (string id in ids)
+        int end = start + count;
+        for (int i = start; i < end; i++)
         {
-            batch = batch.DeleteItem(id);
+            batch = batch.DeleteItem(ids[i]);
         }
 
         using TransactionalBatchResponse resp = await batch.ExecuteAsync(cancellationToken)
                                                            .NoSync();
-        // Optional: validate resp.IsSuccessStatusCode or inspect per-op results
     }
 }

@@ -25,6 +25,16 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves the most recent document associated with the specified partition key, if available.
+    /// </summary>
+    /// <param name="partitionKey">The partition key used to identify the set of documents to search. Cannot be null or empty.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A value task that represents the asynchronous operation. The result contains the latest document for the
+    /// specified partition key, or null if no document exists.</returns>
+    [Pure]
+    ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
+
     [Pure]
     ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default);
 

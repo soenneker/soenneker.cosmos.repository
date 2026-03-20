@@ -28,17 +28,40 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        var q = new QueryDefinition("SELECT TOP 1 * FROM c ORDER BY c._ts DESC");
+        var q = new QueryDefinition("SELECT TOP 1 * FROM c");
 
-        using FeedIterator<TDocument>? it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
+        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
         {
             PartitionKey = new PartitionKey(partitionKey),
             MaxItemCount = 1
         });
 
-        FeedResponse<TDocument>? page = await it.ReadNextAsync(cancellationToken).NoSync();
+        FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();
 
-        if (page.Count == 0) 
+        int count = page.Count;
+        if (count == 0)
+            return null;
+
+        using IEnumerator<TDocument> e = page.Resource.GetEnumerator();
+        return e.MoveNext() ? e.Current : null;
+    }
+
+    public async ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
+    {
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+
+        var q = new QueryDefinition("SELECT TOP 1 * FROM c ORDER BY c.createdAt DESC");
+
+        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
+        {
+            PartitionKey = new PartitionKey(partitionKey),
+            MaxItemCount = 1
+        });
+
+        FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();
+
+        int count = page.Count;
+        if (count == 0)
             return null;
 
         using IEnumerator<TDocument> e = page.Resource.GetEnumerator();
@@ -56,16 +79,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             if (_log)
             {
-                string logId = documentId == partitionKey ? documentId : $"{partitionKey}:{documentId}";
+                string logId = documentId == partitionKey
+                    ? documentId
+                    : string.Concat(partitionKey, ":", documentId);
 
                 Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, logId);
             }
 
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-            ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
-                                                                  cancellationToken: cancellationToken)
-                                                              .NoSync();
+            ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(
+                documentId,
+                new PartitionKey(partitionKey),
+                cancellationToken: cancellationToken).NoSync();
 
             return response.Resource;
         }
@@ -79,7 +105,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
-        query = query.OrderBy(x => x.CreatedAt);
+        query = query.OrderBy(static x => x.CreatedAt);
 
         return await GetItem(query, cancellationToken).NoSync();
     }
@@ -88,7 +114,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
 
-        query = query.OrderByDescending(x => x.CreatedAt);
+        query = query.OrderByDescending(static x => x.CreatedAt);
 
         return await GetItem(query, cancellationToken).NoSync();
     }
