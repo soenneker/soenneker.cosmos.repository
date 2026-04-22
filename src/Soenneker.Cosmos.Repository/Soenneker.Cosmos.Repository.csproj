@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="4.0.281" />
+        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="4.0.282" />
         <PackageReference Include="Soenneker.Constants.Data" Version="4.0.626" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="4.0.2403" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="4.0.164" />
@@ -50,7 +50,7 @@
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="4.0.707" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="4.0.710" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2361" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2516" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2517" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.452" />
         <PackageReference Include="Soenneker.Utils.PooledStringBuilders" Version="4.0.21" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1716" />
