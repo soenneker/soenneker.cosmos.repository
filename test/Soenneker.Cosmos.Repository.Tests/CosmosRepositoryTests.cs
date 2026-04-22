@@ -1,16 +1,15 @@
-using Soenneker.Tests.FixturedUnit;
-using Xunit;
+using Soenneker.Tests.HostedUnit;
 
 namespace Soenneker.Cosmos.Repository.Tests;
 
-[Collection("Collection")]
-public class CosmosRepositoryTests : FixturedUnitTest
+[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+public class CosmosRepositoryTests : HostedUnitTest
 {
-    public CosmosRepositoryTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
+    public CosmosRepositoryTests(Host host) : base(host)
     {
     }
 
-    [Fact]
+    [Test]
     public void Default()
     {
 
