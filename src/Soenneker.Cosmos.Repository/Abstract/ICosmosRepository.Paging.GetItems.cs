@@ -8,8 +8,19 @@ using Soenneker.Constants.Data;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines the cosmos repository contract.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
+    /// <summary>
+    /// Gets all paged.
+    /// </summary>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
@@ -28,6 +39,14 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets items paged.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuation">The continuation.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
         CancellationToken cancellationToken = default);

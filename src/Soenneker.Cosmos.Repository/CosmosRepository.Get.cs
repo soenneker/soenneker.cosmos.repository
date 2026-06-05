@@ -15,8 +15,18 @@ using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Gets item.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
@@ -24,6 +34,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return GetItem(documentId, partitionKey, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets item by partition key.
+    /// </summary>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
@@ -46,6 +62,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return e.MoveNext() ? e.Current : null;
     }
 
+    /// <summary>
+    /// Gets latest by partition key.
+    /// </summary>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
@@ -68,11 +90,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return e.MoveNext() ? e.Current : null;
     }
 
+    /// <summary>
+    /// Gets item by id name pair.
+    /// </summary>
+    /// <param name="idNamePair">The id name pair.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)
     {
         return GetItem(idNamePair.Id, idNamePair.Id, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets item.
+    /// </summary>
+    /// <param name="documentId">The document id.</param>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default)
     {
         try
@@ -101,6 +136,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
+    /// <summary>
+    /// Gets first.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
@@ -110,6 +150,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return await GetItem(query, cancellationToken).NoSync();
     }
 
+    /// <summary>
+    /// Gets last.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();

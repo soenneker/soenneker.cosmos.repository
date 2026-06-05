@@ -13,8 +13,19 @@ using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Gets all paged.
+    /// </summary>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize,
         string? continuationToken = null, CancellationToken cancellationToken = default)
     {
@@ -30,6 +41,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets items paged.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize,
         string? continuationToken, CancellationToken cancellationToken = default)
     {
@@ -72,6 +91,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return (items, response.ContinuationToken);
     }
 
+    /// <summary>
+    /// Gets items paged.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="query">The query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query,
         CancellationToken cancellationToken = default)
     {
@@ -101,6 +127,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return (items, response.ContinuationToken);
     }
 
+    /// <summary>
+    /// Gets items paged.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuation">The continuation.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
         CancellationToken cancellationToken = default)
     {

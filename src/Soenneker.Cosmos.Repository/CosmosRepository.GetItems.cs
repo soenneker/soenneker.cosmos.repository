@@ -15,8 +15,18 @@ using Soenneker.Utils.PooledStringBuilders;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Gets all.
+    /// </summary>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -30,6 +40,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets all by partition key.
+    /// </summary>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -47,6 +64,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets all by document ids.
+    /// </summary>
+    /// <param name="documentIds">The document ids.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> documentIds, CancellationToken cancellationToken = default)
     {
         int count = documentIds.Count;
@@ -87,6 +110,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return results;
     }
 
+    /// <summary>
+    /// Gets all by id partition pairs.
+    /// </summary>
+    /// <param name="pairs">The pairs.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs, CancellationToken cancellationToken = default)
     {
         int count = pairs.Count;
@@ -110,6 +139,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return response.Resource as List<TDocument> ?? response.Resource.ToList();
     }
 
+    /// <summary>
+    /// Gets all by id name pairs.
+    /// </summary>
+    /// <param name="pairs">The pairs.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default)
     {
         int count = pairs.Count;
@@ -133,21 +168,49 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return GetAllByIdPartitionPairs(idPartitionPairs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         return GetItems<TDocument>(query, delayMs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<T>> GetItems<T>(string query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         return GetItems<T>(new QueryDefinition(query), delayMs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         return GetItems<TDocument>(queryDefinition, delayMs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets all ids.
+    /// </summary>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default)
     {
         var qd = new QueryDefinition("SELECT VALUE { id: c.id, partitionKey: c.partitionKey } FROM c");
@@ -155,6 +218,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets ids.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="options">The options.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<IdPartitionPair>> GetIds(QueryDefinition queryDefinition, QueryRequestOptions? options = null, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {
@@ -194,6 +265,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return results;
     }
 
+    /// <summary>
+    /// Gets ids.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<IdPartitionPair>> GetIds(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         IQueryable<IdPartitionPair> idQueryable = query.Select(static d => new IdPartitionPair
@@ -205,6 +283,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return GetItems(idQueryable, delayMs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets all partition keys.
+    /// </summary>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -219,6 +303,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets partition keys.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<List<string>> GetPartitionKeys(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         IQueryable<string> idQueryable = query.Select(static d => d.PartitionKey)
@@ -227,6 +318,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return GetItems(idQueryable, delayMs, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<T>> GetItems<T>(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(queryDefinition, MethodUtil.Get());
@@ -271,6 +370,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return results;
     }
 
+    /// <summary>
+    /// Gets items between.
+    /// </summary>
+    /// <param name="startAt">The start at.</param>
+    /// <param name="endAt">The end at.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTimeOffset startAt, DateTimeOffset endAt, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {

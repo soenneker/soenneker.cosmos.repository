@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines the cosmos repository contract.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
@@ -35,6 +39,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets item by id name pair.
+    /// </summary>
+    /// <param name="idNamePair">The id name pair.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default);
 

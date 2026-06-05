@@ -7,6 +7,10 @@ using Microsoft.Azure.Cosmos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines the cosmos repository contract.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
@@ -30,6 +34,14 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the execute on get items paged operation.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="resultTask">The result task.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
     
 }

@@ -41,14 +41,8 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     protected ValueTask<Microsoft.Azure.Cosmos.Container> Container(CancellationToken cancellationToken = default) =>
         _cosmosContainerUtil.Get(ContainerName, cancellationToken);
 
-    /// <summary>
-    /// Should we create audit records for this repository event?
-    /// </summary>
     public virtual bool AuditEnabled => true;
 
-    /// <summary>
-    /// Name of the CosmosDB container
-    /// </summary>
     public abstract string ContainerName { get; }
 
     protected ILogger<CosmosRepository<TDocument>> Logger { get; }

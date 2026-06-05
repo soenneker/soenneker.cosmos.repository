@@ -20,9 +20,22 @@ using Soenneker.Utils.Method;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     // Avoids container lookup per item, thus not using UpdateItem
+    /// <summary>
+    /// Updates items.
+    /// </summary>
+    /// <param name="documents">The documents.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="excludeResponse">The exclude response.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
@@ -102,6 +115,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return documents;
     }
 
+    /// <summary>
+    /// Updates items parallel.
+    /// </summary>
+    /// <param name="documents">The documents.</param>
+    /// <param name="maxConcurrency">The max concurrency.</param>
+    /// <param name="excludeResponse">The exclude response.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {

@@ -17,8 +17,20 @@ using Soenneker.Enums.JsonLibrary;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Adds item.
+    /// </summary>
+    /// <param name="document">The document.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="excludeResponse">The exclude response.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {

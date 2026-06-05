@@ -18,8 +18,19 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Deletes item.
+    /// </summary>
+    /// <param name="entityId">The entity id.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = entityId.ToSplitId();
@@ -27,6 +38,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return DeleteItem(documentId, partitionKey, useQueue, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes all.
+    /// </summary>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name,
@@ -41,6 +59,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
+    /// <summary>
+    /// Deletes items.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DeleteItems(IQueryable<TDocument> query, double? delayMs = null, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
@@ -54,6 +80,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Deletes items parallel.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="maxConcurrency">The max concurrency.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DeleteItemsParallel(IQueryable<TDocument> query, int maxConcurrency, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {
@@ -67,6 +101,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Deletes ids.
+    /// </summary>
+    /// <param name="ids">The ids.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
@@ -99,6 +141,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
+    /// <summary>
+    /// Deletes ids parallel.
+    /// </summary>
+    /// <param name="ids">The ids.</param>
+    /// <param name="maxConcurrency">The max concurrency.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency, CancellationToken cancellationToken = default)
     {
         if (_log)
@@ -122,6 +171,15 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
+    /// <summary>
+    /// Deletes item with container.
+    /// </summary>
+    /// <param name="container">The container.</param>
+    /// <param name="documentId">The document id.</param>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="ct">The ct.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteItemWithContainer(Microsoft.Azure.Cosmos.Container container, string documentId, string partitionKey,
         bool useQueue = false, CancellationToken ct = default)
     {
@@ -176,6 +234,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 .NoSync();
     }
 
+    /// <summary>
+    /// Deletes item.
+    /// </summary>
+    /// <param name="documentId">The document id.</param>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
@@ -183,6 +249,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken).NoSync();
     }
 
+    /// <summary>
+    /// Deletes created at between.
+    /// </summary>
+    /// <param name="startAt">The start at.</param>
+    /// <param name="endAt">The end at.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -212,6 +285,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Deletes ids batched.
+    /// </summary>
+    /// <param name="ids">The ids.</param>
+    /// <param name="batchSize">The batch size.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteIdsBatched(List<IdPartitionPair> ids, int batchSize = 100, CancellationToken cancellationToken = default)
     {
         if (ids.Count == 0)

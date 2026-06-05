@@ -19,8 +19,20 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Builds db event audit record.
+    /// </summary>
+    /// <param name="eventType">The event type.</param>
+    /// <param name="entityId">The entity id.</param>
+    /// <param name="entity">The entity.</param>
+    /// <param name="userId">The user id.</param>
+    /// <returns>The result of the operation.</returns>
     public AuditDocument BuildDbEventAuditRecord(CrudEventType eventType, string entityId, object? entity, string? userId)
     {
         // The PartitionKey of the AuditRow is the Document Id of the target entity
@@ -41,6 +53,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         };
     }
 
+    /// <summary>
+    /// Creates audit item.
+    /// </summary>
+    /// <param name="eventType">The event type.</param>
+    /// <param name="entityId">The entity id.</param>
+    /// <param name="item">The item.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask CreateAuditItem(CrudEventType eventType, string entityId, object? item = null, CancellationToken cancellationToken = default)
     {
         string? userId = _userContext.GetIdSafe();
@@ -59,6 +79,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
 
+    /// <summary>
+    /// Creates audit item.
+    /// </summary>
+    /// <param name="eventType">The event type.</param>
+    /// <param name="entityId">The entity id.</param>
+    /// <param name="entityJson">The entity json.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask CreateAuditItem(CrudEventType eventType, string entityId, string entityJson, CancellationToken cancellationToken = default)
     {
         string? userId = _userContext.GetIdSafe();

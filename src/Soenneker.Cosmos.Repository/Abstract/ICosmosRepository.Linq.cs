@@ -8,15 +8,38 @@ using Soenneker.Constants.Data;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines the cosmos repository contract.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
+    /// <summary>
+    /// Builds queryable.
+    /// </summary>
+    /// <param name="queryRequestOptions">The query request options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Builds queryable.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="queryRequestOptions">The query request options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
 
-    ///<inheritdoc cref="BuildPagedQueryable{T}"/>
+    /// <summary>
+    /// Builds paged queryable.
+    /// </summary>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
@@ -45,15 +68,36 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<List<TDocument>> GetItems(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the count operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<int> Count(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the count operation.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<int> Count(IQueryable<TDocument> query, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the any operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<bool> Any(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the none operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [Pure]
     ValueTask<bool> None(CancellationToken cancellationToken = default);
 }

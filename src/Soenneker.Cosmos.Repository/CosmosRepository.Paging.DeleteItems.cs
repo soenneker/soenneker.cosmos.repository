@@ -12,10 +12,22 @@ using Soenneker.Extensions.Task;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     private readonly record struct IdOnlyProjection(string DocumentId, string PartitionKey);
 
+    /// <summary>
+    /// Deletes all paged.
+    /// </summary>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
@@ -54,6 +66,15 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
+    /// <summary>
+    /// Deletes items paged.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public virtual async ValueTask DeleteItemsPaged(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null,
         bool useQueue = false, CancellationToken cancellationToken = default)
     {

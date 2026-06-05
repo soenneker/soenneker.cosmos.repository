@@ -17,14 +17,31 @@ namespace Soenneker.Cosmos.Repository;
 //https://docs.microsoft.com/en-us/azure/cosmos-db/sql/sql-query-linq-to-sql
 //https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.cosmos.container.getitemlinqquery?view=azure-dotnet
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Builds queryable.
+    /// </summary>
+    /// <param name="queryRequestOptions">The query request options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default)
     {
         return BuildQueryable<TDocument>(queryRequestOptions, cancellationToken);
     }
 
+    /// <summary>
+    /// Builds queryable.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="queryRequestOptions">The query request options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -32,6 +49,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return container.GetItemLinqQueryable<T>(requestOptions: queryRequestOptions);
     }
 
+    /// <summary>
+    /// Builds paged queryable.
+    /// </summary>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = 500, string? continuationToken = null,
         CancellationToken cancellationToken = default)
@@ -39,6 +63,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return BuildPagedQueryable<TDocument>(pageSize, continuationToken, cancellationToken);
     }
 
+    /// <summary>
+    /// Builds paged queryable.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="continuationToken">The continuation token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = 500, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
         var requestOptions = new QueryRequestOptions
@@ -57,6 +89,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
+    /// <summary>
+    /// Executes the count operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<int> Count(CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken)
@@ -66,6 +103,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Executes the count operation.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<int> Count(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
         Response<int> response = await query.CountAsync(cancellationToken: cancellationToken)
@@ -74,6 +117,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return response.Resource;
     }
 
+    /// <summary>
+    /// Executes the any operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<bool> Any(CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryable(null, cancellationToken)
@@ -83,12 +131,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Executes the none operation.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<bool> None(CancellationToken cancellationToken = default)
     {
         return !await Any(cancellationToken)
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets item.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="query">The query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<T?> GetItem<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(query, MethodUtil.Get());
@@ -112,6 +172,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return enumerator.MoveNext() ? enumerator.Current : default;
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <typeparam name="T">The T type.</typeparam>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(query, MethodUtil.Get());
@@ -124,6 +192,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             .NoSync();
     }
 
+    /// <summary>
+    /// Gets items.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="delayMs">The delay ms.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<List<TDocument>> GetItems(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
         LogQuery<TDocument>(query, MethodUtil.Get());

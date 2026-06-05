@@ -7,8 +7,14 @@ namespace Soenneker.Cosmos.Repository.Abstract.Utils;
 /// </summary>
 public interface ICosmosRepositoryContext
 {
+    /// <summary>
+    /// Should we create audit records for this repository event?
+    /// </summary>
     bool AuditEnabled { get; }
 
+    /// <summary>
+    /// Name of the CosmosDB container
+    /// </summary>
     string ContainerName { get; }
 
     /// <summary>

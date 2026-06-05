@@ -17,14 +17,35 @@ using Soenneker.Enums.JsonLibrary;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Updates item.
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="excludeResponse">The exclude response.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<TDocument> UpdateItem(TDocument item, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
         return UpdateItem(item.Id, item, useQueue, excludeResponse, cancellationToken);
     }
 
+    /// <summary>
+    /// Updates item.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="item">The item.</param>
+    /// <param name="useQueue">The use queue.</param>
+    /// <param name="excludeResponse">The exclude response.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {

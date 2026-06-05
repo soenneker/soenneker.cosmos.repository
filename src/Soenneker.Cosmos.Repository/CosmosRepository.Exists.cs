@@ -11,8 +11,18 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
+/// <summary>
+/// Represents the cosmos repository.
+/// </summary>
+/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
+    /// <summary>
+    /// Executes the exists operation.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
@@ -20,6 +30,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return Exists(partitionKey, documentId, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the exists operation.
+    /// </summary>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="documentId">The document id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<bool> Exists(string partitionKey, string documentId, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
@@ -32,6 +49,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return resp.StatusCode == HttpStatusCode.OK;
     }
 
+    /// <summary>
+    /// Executes the exists operation.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
         using FeedIterator<TDocument> iterator = query.Take(1)
@@ -46,6 +69,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return response.Count > 0;
     }
 
+    /// <summary>
+    /// Executes the exists by partition key operation.
+    /// </summary>
+    /// <param name="partitionKey">The partition key.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
