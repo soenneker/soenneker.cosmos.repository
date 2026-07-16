@@ -50,7 +50,7 @@
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="4.0.715" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="4.0.718" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2417" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2583" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2585" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.455" />
         <PackageReference Include="Soenneker.Utils.PooledStringBuilders" Version="4.0.25" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1749" />
