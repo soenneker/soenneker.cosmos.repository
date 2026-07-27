@@ -10,7 +10,6 @@ using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Cosmos.Repository.Dtos;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
-using Soenneker.Enums.JsonLibrary;
 using Soenneker.Enums.JsonOptions;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -81,7 +80,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             if (useQueue)
             {
                 string itemId = item.Id;
-                string? json = JsonUtil.Serialize(item, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+                byte[] json = JsonUtil.SerializeToUtf8Bytes(item, JsonOptionType.Web);
                 var pk = new PartitionKey(partitionKey);
 
                 // Snapshot AuditEnabled once if you want; or evaluate at execution time.
@@ -89,11 +88,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                 await _backgroundQueue.QueueValueTask(
                                           (Container: container, DocumentId: documentId, PartitionKey: pk, Json: json, Options: options,
-                                              MemoryStreamUtil: _memoryStreamUtil, AuditEnabled: auditEnabled, Self: this, ItemId: itemId),
+                                              AuditEnabled: auditEnabled, Self: this, ItemId: itemId),
                                           static async (s, token) =>
                                           {
-                                              using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
-                                                                             .NoSync();
+                                              using var ms = new MemoryStream(s.Json, writable: false);
 
                                               using ResponseMessage resp = await s
                                                                                  .Container.ReplaceItemStreamAsync(ms, s.DocumentId, s.PartitionKey, s.Options,

@@ -10,5 +10,27 @@
             "@i30","@i31","@i32","@i33","@i34","@i35","@i36","@i37","@i38","@i39",
             "@i40","@i41","@i42","@i43","@i44","@i45","@i46","@i47","@i48","@i49"
         ];
+
+        public static readonly string[] IdInQueryTexts = BuildIdInQueryTexts();
+
+        private static string[] BuildIdInQueryTexts()
+        {
+            var results = new string[IdParameterNames.Length];
+            var query = new System.Text.StringBuilder(32 + IdParameterNames.Length * 6);
+            query.Append("SELECT * FROM c WHERE c.id IN (");
+
+            for (var i = 0; i < IdParameterNames.Length; i++)
+            {
+                if (i != 0)
+                    query.Append(',');
+
+                query.Append(IdParameterNames[i]);
+                query.Append(')');
+                results[i] = query.ToString();
+                query.Length--;
+            }
+
+            return results;
+        }
     }
 }

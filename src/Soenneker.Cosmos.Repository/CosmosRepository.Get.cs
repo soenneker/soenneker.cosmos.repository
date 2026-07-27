@@ -58,7 +58,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
         {
             PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1
+            MaxItemCount = 1,
+            EnableOptimisticDirectExecution = true
         });
 
         FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();
@@ -80,7 +81,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
         {
             PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1
+            MaxItemCount = 1,
+            EnableOptimisticDirectExecution = true
         });
 
         FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();

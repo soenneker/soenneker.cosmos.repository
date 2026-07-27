@@ -56,7 +56,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator it = container.GetItemQueryStreamIterator(q, requestOptions: new QueryRequestOptions
         {
             PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1
+            MaxItemCount = 1,
+            EnableOptimisticDirectExecution = true
         });
 
         if (!it.HasMoreResults)

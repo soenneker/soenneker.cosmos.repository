@@ -15,7 +15,6 @@ using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.Enums.JsonLibrary;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -74,14 +73,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            string? itemJson = JsonUtil.Serialize(item, JsonOptionType.Web, JsonLibraryType.SystemTextJson);
+            byte[] itemJson = JsonUtil.SerializeToUtf8Bytes(item, JsonOptionType.Web);
 
             await _backgroundQueue.QueueValueTask(
                                       (Container: container, DocumentId: documentId, PartitionKey: pk, Json: itemJson, Options: options,
-                                          MemoryStreamUtil: _memoryStreamUtil, AuditEnabled: auditEnabled, FullId: id, Self: this), static async (s, token) =>
+                                          AuditEnabled: auditEnabled, FullId: id, Self: this), static async (s, token) =>
                                       {
-                                          using MemoryStream ms = await s.MemoryStreamUtil.Get(s.Json, token)
-                                                                         .NoSync();
+                                          using var ms = new MemoryStream(s.Json, writable: false);
 
                                           using ResponseMessage resp = await s
                                                                              .Container.ReplaceItemStreamAsync(ms, s.DocumentId, s.PartitionKey, s.Options,
@@ -92,7 +90,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                                           if (s.AuditEnabled)
                                           {
-                                              await s.Self.CreateAuditItem(CrudEventType.Update, s.FullId, s.Json, token)
+                                              await s.Self.CreateAuditItemFromUtf8(CrudEventType.Update, s.FullId, s.Json, token)
                                                      .NoSync();
                                           }
                                       }, cancellationToken)

@@ -47,7 +47,6 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     private readonly IUserContext _userContext;
     private readonly IBackgroundQueue _backgroundQueue;
-    private readonly IMemoryStreamUtil _memoryStreamUtil;
 
     private readonly bool _log;
     private readonly bool _auditLog;
@@ -59,7 +58,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         Logger = logger;
         _userContext = userContext;
         _backgroundQueue = backgroundQueue;
-        _memoryStreamUtil = memoryStreamUtil;
+        _ = memoryStreamUtil;
 
         _log = config.GetValue<bool>("Azure:Cosmos:Log");
         _auditLog = config.GetValue<bool>("Azure:Cosmos:AuditLog");

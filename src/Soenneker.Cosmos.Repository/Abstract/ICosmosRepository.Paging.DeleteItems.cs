@@ -18,6 +18,16 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Deletes all items page-by-page with bounded parallelism.
+    /// </summary>
+    /// <param name="maxConcurrency">The maximum number of concurrent delete operations.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    ValueTask DeleteAllPagedParallel(int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes items paged.
     /// </summary>
     /// <param name="queryDefinition">The query definition.</param>
@@ -27,4 +37,15 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     ValueTask DeleteItemsPaged(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes the queried items page-by-page with bounded parallelism.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="maxConcurrency">The maximum number of concurrent delete operations.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    ValueTask DeleteItemsPagedParallel(QueryDefinition queryDefinition, int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
+        CancellationToken cancellationToken = default);
 }

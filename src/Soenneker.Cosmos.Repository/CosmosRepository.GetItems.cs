@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.Utils.PooledStringBuilders;
 
 namespace Soenneker.Cosmos.Repository;
 
@@ -289,22 +288,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     private static QueryDefinition BuildIdInQuery(List<string> documentIds, int offset, int count)
     {
-        int estimatedLength = 32 + count * 6;
-        using var query = new PooledStringBuilder(estimatedLength);
-
-        query.Append("SELECT * FROM c WHERE c.id IN (");
-
-        for (int i = 0; i < count; i++)
-        {
-            if (i != 0)
-                query.Append(',');
-
-            query.Append(CosmosRepositoryStatics.IdParameterNames[i]);
-        }
-
-        query.Append(')');
-
-        QueryDefinition queryDefinition = new(query.ToString());
+        QueryDefinition queryDefinition = new(CosmosRepositoryStatics.IdInQueryTexts[count - 1]);
 
         for (int i = 0; i < count; i++)
         {
