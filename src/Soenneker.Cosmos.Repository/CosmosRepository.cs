@@ -28,16 +28,14 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     private readonly ICosmosContainerUtil _cosmosContainerUtil;
 
-    /// <summary>
-    /// Audit container that will store audit log for all entities.
-    /// TODO: Perhaps need to make audit container available...
-    /// </summary>
     private ValueTask<Microsoft.Azure.Cosmos.Container> AuditContainer(CancellationToken cancellationToken = default) =>
         _cosmosContainerUtil.Get("audits", cancellationToken);
 
     /// <summary>
-    /// Cosmos DB container
+    /// Gets the Cosmos DB container used by this repository.
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The repository's Cosmos DB container.</returns>
     protected ValueTask<Microsoft.Azure.Cosmos.Container> Container(CancellationToken cancellationToken = default) =>
         _cosmosContainerUtil.Get(ContainerName, cancellationToken);
 

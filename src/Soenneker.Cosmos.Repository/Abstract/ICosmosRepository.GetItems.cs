@@ -10,10 +10,6 @@ using Soenneker.Dtos.IdPartitionPair;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
-/// <summary>
-/// Defines the cosmos repository contract.
-/// </summary>
-/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>

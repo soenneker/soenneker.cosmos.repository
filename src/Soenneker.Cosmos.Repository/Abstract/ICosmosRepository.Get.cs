@@ -2,15 +2,22 @@
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Cosmos.Repository.Dtos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
-/// <summary>
-/// Defines the cosmos repository contract.
-/// </summary>
-/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
+    /// <summary>
+    /// Gets an item together with the ETag required for a subsequent conditional write.
+    /// </summary>
+    ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets an item together with the ETag required for a subsequent conditional write.
+    /// </summary>
+    ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Get one item by Id (partition id and document id, or one guid if they're the same) <para/>
     /// Will not throw.
@@ -55,15 +62,19 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default);
 
-    /// <returns>
-    /// The very first item ordered by createdAt ascending
-    /// </returns>
+    /// <summary>
+    /// Gets the first item ordered by creation time ascending.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The earliest-created item, or <see langword="null"/> when no item exists.</returns>
     [Pure]
     ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default);
 
-    /// <returns>
-    /// The very first item ordered by createdAt descending
-    /// </returns>
+    /// <summary>
+    /// Gets the first item ordered by creation time descending.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The latest-created item, or <see langword="null"/> when no item exists.</returns>
     [Pure]
     ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default);
 }

@@ -1,18 +1,53 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Cosmos.Repository.Dtos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
-/// <summary>
-/// Defines the cosmos repository contract.
-/// </summary>
-/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
+    /// <summary>
+    /// Updates a wrapped item only when its ETag still matches.
+    /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
+    /// </summary>
+    /// <returns>The updated document and its new ETag.</returns>
+    ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(CosmosItem<TDocument> item, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an item only when its current ETag matches <paramref name="expectedETag"/>.
+    /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
+    /// </summary>
+    /// <returns>The updated document and its new ETag.</returns>
+    ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(TDocument document, string expectedETag,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an item only when its current ETag matches <paramref name="expectedETag"/>.
+    /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
+    /// </summary>
+    /// <returns>The updated document and its new ETag.</returns>
+    ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(string id, TDocument document, string expectedETag,
+        CancellationToken cancellationToken = default);
+
     // TODO: Add ModifiedAt within this method
-    /// <returns>the same object passed to it</returns>
+    /// <summary>
+    /// Updates an item unconditionally.
+    /// </summary>
+    /// <param name="document">The document to replace.</param>
+    /// <param name="useQueue">Whether to enqueue the update.</param>
+    /// <param name="excludeResponse">Whether Cosmos DB should omit the response body.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The updated document, or the supplied document when the response body is excluded or the operation is queued.</returns>
     ValueTask<TDocument> UpdateItem(TDocument document, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default);
 
-    /// <returns>the same object passed to it</returns>
+    /// <summary>
+    /// Updates an item with the specified full identifier unconditionally.
+    /// </summary>
+    /// <param name="id">The full item identifier.</param>
+    /// <param name="document">The document to replace.</param>
+    /// <param name="useQueue">Whether to enqueue the update.</param>
+    /// <param name="excludeResponse">Whether Cosmos DB should omit the response body.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The updated document, or the supplied document when the response body is excluded or the operation is queued.</returns>
     ValueTask<TDocument> UpdateItem(string id, TDocument document, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default);
 }

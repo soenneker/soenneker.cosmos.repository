@@ -8,10 +8,6 @@ using Soenneker.Constants.Data;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
-/// <summary>
-/// Defines the cosmos repository contract.
-/// </summary>
-/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
@@ -24,6 +20,14 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets a page of items using a query definition and continuation token.
+    /// </summary>
+    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="pageSize">The maximum number of items in the page.</param>
+    /// <param name="continuationToken">The continuation token from the previous page.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The items in the page and the continuation token for the next page.</returns>
     /// <remarks>
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>

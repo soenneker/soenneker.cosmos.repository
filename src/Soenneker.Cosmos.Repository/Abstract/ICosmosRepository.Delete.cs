@@ -4,20 +4,29 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Soenneker.Dtos.IdPartitionPair;
+using Soenneker.Cosmos.Repository.Dtos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
-/// <summary>
-/// Defines the cosmos repository contract.
-/// </summary>
-/// <typeparam name="TDocument">The TDocument type.</typeparam>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
+    /// <summary>
+    /// Deletes a wrapped item only when its ETag still matches.
+    /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
+    /// </summary>
+    ValueTask DeleteItemIfMatch(CosmosItem<TDocument> item, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Hard deletes one item by Id (partition and document, or one guid if they're the same).
     /// Will not throw.
     /// </summary>
     ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an item only when its current ETag matches <paramref name="expectedETag"/>.
+    /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
+    /// </summary>
+    ValueTask DeleteItemIfMatch(string entityId, string expectedETag, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes item.
@@ -29,6 +38,19 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A task that represents the asynchronous operation.</returns>
     ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Deletes an item only when its current ETag matches <paramref name="expectedETag"/>.
+    /// </summary>
+    ValueTask DeleteItemIfMatch(string documentId, string partitionKey, string expectedETag,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes all items.
+    /// </summary>
+    /// <param name="delayMs">The optional delay between delete operations, in milliseconds.</param>
+    /// <param name="useQueue">Whether to enqueue the delete operations.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     /// <remarks>TODO: Perhaps want to turn on Bulk support https://devblogs.microsoft.com/cosmosdb/introducing-bulk-support-in-the-net-sdk/</remarks>
     ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
@@ -63,6 +85,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Deletes every item only when its current ETag matches the value keyed by its full ID.
+    /// </summary>
+    ValueTask DeleteIdsIfMatch(List<IdPartitionPair> ids, IReadOnlyDictionary<string, string> expectedETags, double? delayMs = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes ids parallel.
     /// </summary>
     /// <param name="ids">The ids.</param>
@@ -70,6 +98,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes every item in parallel only when its current ETag matches the value keyed by its full ID.
+    /// </summary>
+    ValueTask DeleteIdsParallelIfMatch(List<IdPartitionPair> ids, IReadOnlyDictionary<string, string> expectedETags, int maxConcurrency,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes created at between.
