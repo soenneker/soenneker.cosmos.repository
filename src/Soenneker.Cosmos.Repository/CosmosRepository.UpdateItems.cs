@@ -65,7 +65,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             TDocument item = documents[i];
 
-            if (_log)
+            if (_log && Logger.IsEnabled(LogLevel.Debug))
             {
                 string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
                 Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
@@ -187,7 +187,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                           try
                           {
-                              if (s.Log)
+                              if (s.Log && s.Self.Logger.IsEnabled(LogLevel.Debug))
                               {
                                   string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
                                   s.Self.Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);

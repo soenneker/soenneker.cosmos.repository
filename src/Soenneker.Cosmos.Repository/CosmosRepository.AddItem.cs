@@ -21,7 +21,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual ValueTask<string> AddItem(TDocument document, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             string? serialized = JsonUtil.Serialize(document, JsonOptionType.Pretty);
             Logger.LogDebug("-- COSMOS: {method} ({type}): {document}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
