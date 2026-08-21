@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
+using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 
 namespace Soenneker.Cosmos.Repository;
@@ -18,16 +20,36 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> query, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
-        string? continuationToken;
+        using FeedIterator<T> iterator = query.ToFeedIterator();
+        await ExecuteOnFeedIterator(iterator, resultTask, cancellationToken).NoSync();
+    }
 
-        do
+    public static async ValueTask ExecuteOnFeedIterator<T>(FeedIterator<T> iterator, Func<List<T>, ValueTask> resultTask,
+        CancellationToken cancellationToken = default)
+    {
+        while (iterator.HasMoreResults)
         {
-            (List<T> docs, string? newContinuationToken) = await GetItemsPaged(query, cancellationToken).NoSync();
+            cancellationToken.ThrowIfCancellationRequested();
 
-            continuationToken = newContinuationToken;
+            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
+            List<T> docs;
+
+            if (response.Resource is List<T> list)
+            {
+                docs = list;
+            }
+            else
+            {
+                docs = new List<T>(response.Count);
+
+                foreach (T item in response)
+                {
+                    docs.Add(item);
+                }
+            }
 
             await resultTask(docs).NoSync();
-        } while (continuationToken != null);
+        }
     }
 
     public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
