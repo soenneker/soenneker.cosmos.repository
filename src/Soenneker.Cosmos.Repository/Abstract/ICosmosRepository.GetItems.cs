@@ -10,6 +10,9 @@ using Soenneker.Dtos.IdPartitionPair;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines get items operations for Cosmos DB documents.
+/// </summary>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
@@ -42,11 +45,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Not recommended - fans out across all partitions, so can be slow and expensive.
+    /// Retrieves documents by ID across every partition. This fans out and can be slow and request-unit intensive.
     /// </summary>
-    /// <param name="ids"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="ids">Document IDs to retrieve.</param>
+    /// <param name="cancellationToken">Token used to cancel the cross-partition reads.</param>
+    /// <returns>A task whose result contains each document that was found.</returns>
     [Pure]
     ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> ids, CancellationToken cancellationToken = default);
 

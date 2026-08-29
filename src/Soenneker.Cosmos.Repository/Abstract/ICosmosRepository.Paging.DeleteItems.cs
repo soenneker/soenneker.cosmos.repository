@@ -5,6 +5,9 @@ using Soenneker.Constants.Data;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines paging delete items operations for Cosmos DB documents.
+/// </summary>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>

@@ -7,6 +7,9 @@ using Microsoft.Azure.Cosmos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines paging execute operations for Cosmos DB documents.
+/// </summary>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>

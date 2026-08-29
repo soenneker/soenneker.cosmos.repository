@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines audit operations for Cosmos DB documents.
+/// </summary>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>

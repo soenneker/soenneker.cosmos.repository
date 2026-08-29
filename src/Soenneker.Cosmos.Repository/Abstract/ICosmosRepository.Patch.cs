@@ -6,6 +6,9 @@ using Soenneker.Cosmos.Repository.Dtos;
 
 namespace Soenneker.Cosmos.Repository.Abstract;
 
+/// <summary>
+/// Defines patch operations for Cosmos DB documents.
+/// </summary>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
