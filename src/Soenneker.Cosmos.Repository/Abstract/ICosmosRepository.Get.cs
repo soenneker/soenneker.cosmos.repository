@@ -11,17 +11,26 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Gets an item together with the ETag required for a subsequent conditional write.
     /// </summary>
+    /// <param name="id">Identifier of the cosmos repository instance or registration to target.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the requested cosmos Item.</returns>
     ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an item together with the ETag required for a subsequent conditional write.
     /// </summary>
+    /// <param name="documentId">Identifier of the target document.</param>
+    /// <param name="partitionKey">Partition key used to route the database operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the requested cosmos Item.</returns>
     ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get one item by Id (partition id and document id, or one guid if they're the same) <para/>
     /// Will not throw.
     /// </summary>
+    /// <param name="id">Identifier of the Cosmos Repository instance or registration to target.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>null if cannot be found</returns>
     [Pure]
     ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default);
@@ -49,15 +58,18 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Gets item by id name pair.
     /// </summary>
-    /// <param name="idNamePair">The id name pair.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="idNamePair">Id Name Pair for the get item by id name pair operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the t Document returned by get Item By ID Name Pair.</returns>
     [Pure]
     ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Will not throw.
     /// </summary>
+    /// <param name="documentId">Identifier of the target document.</param>
+    /// <param name="partitionKey">Partition key used to route the database operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>null if cannot be found</returns>
     [Pure]
     ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default);

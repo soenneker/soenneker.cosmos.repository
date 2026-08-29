@@ -10,6 +10,8 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Updates a wrapped item only when its ETag still matches.
     /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
     /// </summary>
+    /// <param name="item">Receives the entry when the key is found.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>The updated document and its new ETag.</returns>
     ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(CosmosItem<TDocument> item, CancellationToken cancellationToken = default);
 
@@ -17,6 +19,9 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Updates an item only when its current ETag matches <paramref name="expectedETag"/>.
     /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
     /// </summary>
+    /// <param name="document">Document to read, persist, or update.</param>
+    /// <param name="expectedETag">ETag required for the conditional update.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>The updated document and its new ETag.</returns>
     ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(TDocument document, string expectedETag,
         CancellationToken cancellationToken = default);
@@ -25,6 +30,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Updates an item only when its current ETag matches <paramref name="expectedETag"/>.
     /// Cosmos DB throws a 412 Precondition Failed response when the item has changed.
     /// </summary>
+    /// <param name="id">Identifier of the Cosmos Repository instance or registration to target.</param>
+    /// <param name="document">Document to read, persist, or update.</param>
+    /// <param name="expectedETag">ETag required for the conditional update.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>The updated document and its new ETag.</returns>
     ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(string id, TDocument document, string expectedETag,
         CancellationToken cancellationToken = default);

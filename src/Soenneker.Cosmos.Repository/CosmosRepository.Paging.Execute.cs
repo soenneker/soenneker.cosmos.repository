@@ -8,9 +8,7 @@ using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
-
 namespace Soenneker.Cosmos.Repository;
-
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> query, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
@@ -24,6 +22,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         await ExecuteOnFeedIterator(iterator, resultTask, cancellationToken).NoSync();
     }
 
+    /// <summary>
+    /// Executes on Feed Iterator.
+    /// </summary>
+    /// <typeparam name="T">Type of value handled by the Cosmos Repository.</typeparam>
+    /// <param name="iterator">Iterator for the execute on feed iterator operation.</param>
+    /// <param name="resultTask">Callback used by execute on feed iterator.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that completes when the execute on feed iterator operation is complete.</returns>
     public static async ValueTask ExecuteOnFeedIterator<T>(FeedIterator<T> iterator, Func<List<T>, ValueTask> resultTask,
         CancellationToken cancellationToken = default)
     {

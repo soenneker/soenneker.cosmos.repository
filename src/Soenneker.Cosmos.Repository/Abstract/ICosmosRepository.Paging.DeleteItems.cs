@@ -10,42 +10,42 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Deletes all paged.
     /// </summary>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="delayMs">The delay ms.</param>
-    /// <param name="useQueue">The use queue.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
+    /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes all items page-by-page with bounded parallelism.
     /// </summary>
     /// <param name="maxConcurrency">The maximum number of concurrent delete operations.</param>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteAllPagedParallel(int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes items paged.
     /// </summary>
-    /// <param name="queryDefinition">The query definition.</param>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="delayMs">The delay ms.</param>
-    /// <param name="useQueue">The use queue.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="queryDefinition">Database query and parameters to execute.</param>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
+    /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItemsPaged(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the queried items page-by-page with bounded parallelism.
     /// </summary>
-    /// <param name="queryDefinition">The query definition.</param>
+    /// <param name="queryDefinition">Database query and parameters to execute.</param>
     /// <param name="maxConcurrency">The maximum number of concurrent delete operations.</param>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItemsPagedParallel(QueryDefinition queryDefinition, int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
         CancellationToken cancellationToken = default);
 }

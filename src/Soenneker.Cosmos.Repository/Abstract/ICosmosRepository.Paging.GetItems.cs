@@ -13,10 +13,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Gets all paged.
     /// </summary>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="continuationToken">The continuation token.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="continuationToken">Token identifying the next page of query results.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the requested (List items, string continuation Token).</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
 
@@ -37,6 +37,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Be sure to pass a query that was built via <see cref="BuildPagedQueryable"/>
     /// </summary>
+    /// <typeparam name="T">Type of value handled by the cosmos repository.</typeparam>
+    /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the requested (List items, string continuation Token).</returns>
     /// <remarks>
     /// NOTE! Make sure you have an ORDER clause in your query or the continuation token functionality may not work
     /// </remarks>
@@ -46,11 +50,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Gets items paged.
     /// </summary>
-    /// <param name="query">The query.</param>
-    /// <param name="pageSize">The page size.</param>
-    /// <param name="continuation">The continuation.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
+    /// <param name="pageSize">Maximum number of items to request per page.</param>
+    /// <param name="continuation">Continuation for the get items paged operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task whose result is the requested (List items, string continuation Token).</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
         CancellationToken cancellationToken = default);

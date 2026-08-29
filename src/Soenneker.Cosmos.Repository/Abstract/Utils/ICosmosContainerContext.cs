@@ -21,5 +21,6 @@ public interface ICosmosRepositoryContext
     /// Container partition key must be able to be parsed from entity Id.
     /// </summary>
     /// <param name="entityId">A uniquely identifying string consisting of one or two substrings concatenated together and separated by ':'.</param>
+    /// <returns>The resulting partition Key.</returns>
     PartitionKey ResolvePartitionKey(string entityId);
 }

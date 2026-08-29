@@ -8,39 +8,39 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
-    /// Executes the exists operation.
+    /// Checks for cosmos Repository.
     /// </summary>
-    /// <param name="id">The identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="id">Identifier of the cosmos repository instance or registration to target.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>true if retrieves exists from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
     ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Executes the exists operation.
+    /// Checks for cosmos Repository.
     /// </summary>
-    /// <param name="documentId">The document id.</param>
-    /// <param name="partitionKey">The partition key.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="documentId">Identifier of the target document.</param>
+    /// <param name="partitionKey">Partition key used to route the database operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>true if retrieves exists from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
     ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Executes the exists operation.
+    /// Checks for cosmos Repository.
     /// </summary>
-    /// <param name="query">The query.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>true if retrieves exists from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
     ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Executes the exists by partition key operation.
+    /// Checks for by Partition Key.
     /// </summary>
-    /// <param name="partitionKey">The partition key.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="partitionKey">Partition key used to route the database operation.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>true if retrieves exists by partition key from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
     ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
 }
