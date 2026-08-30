@@ -213,11 +213,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                           // Decide your semantics:
                                           // - If deleting a missing doc is "fine", ignore 404.
                                           // - Otherwise, call EnsureSuccessStatusCode().
-                                          if (resp.StatusCode != System.Net.HttpStatusCode.NotFound)
+                                          bool deleted = resp.StatusCode != System.Net.HttpStatusCode.NotFound;
+                                          if (deleted)
                                               resp.EnsureSuccessStatusCode();
 
-                                          // Only write audit after the delete is known-good (or NotFound accepted)
-                                          if (s.AuditEnabled)
+                                          if (s.AuditEnabled && deleted)
                                           {
                                               await s.Self.CreateAuditItem(CrudEventType.Delete, s.EntityId, cancellationToken: token)
                                                      .NoSync();
@@ -231,10 +231,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using ResponseMessage resp2 = await container.DeleteItemStreamAsync(documentId, pk, options, ct)
                                                      .NoSync();
 
-        if (resp2.StatusCode != System.Net.HttpStatusCode.NotFound)
+        bool wasDeleted = resp2.StatusCode != System.Net.HttpStatusCode.NotFound;
+        if (wasDeleted)
             resp2.EnsureSuccessStatusCode();
 
-        if (auditEnabled)
+        if (auditEnabled && wasDeleted)
             await CreateAuditItem(CrudEventType.Delete, entityId, cancellationToken: ct)
                 .NoSync();
     }
@@ -284,7 +285,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
-        QueryDefinition q = new QueryDefinition("SELECT VALUE { id: c.id, pk: c.partitionKey } FROM c WHERE c.createdAt >= @s AND c.createdAt <= @e")
+        QueryDefinition q = new QueryDefinition("SELECT VALUE { id: c.id, partitionKey: c.partitionKey } FROM c WHERE c.createdAt >= @s AND c.createdAt <= @e")
                             .WithParameter("@s", startAt)
                             .WithParameter("@e", endAt);
 
@@ -322,6 +323,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (batchSize <= 0)
             throw new ArgumentOutOfRangeException(nameof(batchSize));
+
+        batchSize = Math.Min(batchSize, 100);
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -371,5 +374,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         using TransactionalBatchResponse resp = await batch.ExecuteAsync(cancellationToken)
                                                            .NoSync();
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+                $"Cosmos transactional delete failed with status {(int)resp.StatusCode} ({resp.StatusCode}). {resp.ErrorMessage} Diagnostics: {resp.Diagnostics}");
+        }
     }
 }

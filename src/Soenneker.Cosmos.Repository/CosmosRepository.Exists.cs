@@ -17,10 +17,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        return Exists(partitionKey, documentId, cancellationToken);
+        return Exists(documentId, partitionKey, cancellationToken);
     }
 
-    public async ValueTask<bool> Exists(string partitionKey, string documentId, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -29,7 +29,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                                         id: documentId, partitionKey: new PartitionKey(partitionKey), cancellationToken: cancellationToken)
                                                     .NoSync();
 
-        return resp.StatusCode == HttpStatusCode.OK;
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+            return false;
+
+        resp.EnsureSuccessStatusCode();
+        return true;
     }
 
     public async ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
@@ -53,7 +57,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         QueryDefinition q = new("SELECT VALUE 1 FROM c OFFSET 0 LIMIT 1");
 
-        using FeedIterator it = container.GetItemQueryStreamIterator(q, requestOptions: new QueryRequestOptions
+        using FeedIterator<int> it = container.GetItemQueryIterator<int>(q, requestOptions: new QueryRequestOptions
         {
             PartitionKey = new PartitionKey(partitionKey),
             MaxItemCount = 1,
@@ -63,9 +67,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (!it.HasMoreResults)
             return false;
 
-        using ResponseMessage resp = await it.ReadNextAsync(cancellationToken)
+        FeedResponse<int> response = await it.ReadNextAsync(cancellationToken)
                                              .NoSync();
 
-        return resp.StatusCode == HttpStatusCode.OK && resp.Content is not null && resp.Content.Length > 2;
+        return response.Count > 0;
     }
 }

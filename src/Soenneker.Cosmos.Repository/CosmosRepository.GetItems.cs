@@ -197,8 +197,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         IQueryable<IdPartitionPair> idQueryable = query.Select(static d => new IdPartitionPair
         {
-            Id = d.DocumentId,
-            PartitionKey = d.PartitionKey
+            Id = d.DocumentId!,
+            PartitionKey = d.PartitionKey!
         });
 
         return GetItems(idQueryable, delayMs, cancellationToken);
@@ -220,7 +220,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public ValueTask<List<string>> GetPartitionKeys(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
-        IQueryable<string> idQueryable = query.Select(static d => d.PartitionKey)
+        IQueryable<string> idQueryable = query.Select(static d => d.PartitionKey!)
                                               .Distinct();
 
         return GetItems(idQueryable, delayMs, cancellationToken);

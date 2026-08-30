@@ -29,22 +29,20 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get one item by Id (partition id and document id, or one guid if they're the same) <para/>
-    /// Will not throw.
+    /// Gets one item by full ID (partition key and document ID, or one value when they are the same).
     /// </summary>
     /// <param name="id">Identifier of the Cosmos Repository instance or registration to target.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
-    /// <returns>null if cannot be found</returns>
+    /// <returns>The document, or <see langword="null"/> when Cosmos returns 404 Not Found. Other failures propagate.</returns>
     [Pure]
     ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves document(s) by partitionKey, and then executes .FirstOrDefault(). The assumption is there's only one document by the partition key specified. <para/>
-    /// Will not throw.
+    /// Returns an arbitrary first document from the specified partition.
     /// </summary>
     /// <param name="partitionKey"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns>null if cannot be found</returns>
+    /// <returns>The document, or <see langword="null"/> when the partition is empty.</returns>
     [Pure]
     ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
 
@@ -68,12 +66,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Will not throw.
+    /// Gets one item by its document ID and partition key.
     /// </summary>
     /// <param name="documentId">Identifier of the target document.</param>
     /// <param name="partitionKey">Partition key used to route the database operation.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
-    /// <returns>null if cannot be found</returns>
+    /// <returns>The document, or <see langword="null"/> when Cosmos returns 404 Not Found. Other failures propagate.</returns>
     [Pure]
     ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default);
 

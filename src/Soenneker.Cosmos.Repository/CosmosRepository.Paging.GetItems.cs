@@ -36,8 +36,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             string query = BuildQueryLogText(queryDefinition);
-            Logger.LogDebug("-- COSMOS: {method} ({type}): pageSize: {pageSize}, continuationToken: {token}, Query: {query}", MethodUtil.Get(),
-                typeof(TDocument).Name, pageSize, continuationToken, query);
+            Logger.LogDebug("-- COSMOS: {method} ({type}): pageSize: {pageSize}, hasContinuationToken: {hasToken}, Query: {query}", MethodUtil.Get(),
+                typeof(TDocument).Name, pageSize, continuationToken is not null, query);
         }
 
         var requestOptions = new QueryRequestOptions

@@ -23,8 +23,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
-            string? serialized = JsonUtil.Serialize(document, JsonOptionType.Pretty);
-            Logger.LogDebug("-- COSMOS: {method} ({type}): {document}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
+            Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, document.Id);
         }
 
         return InternalAddItem(document, useQueue, excludeResponse, cancellationToken);
@@ -42,15 +41,17 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         bool excludeResponse, CancellationToken cancellationToken)
     {
         if (document.PartitionKey.IsNullOrWhiteSpace() || document.DocumentId.IsNullOrWhiteSpace())
-            throw new Exception("DocumentId and PartitionKey MUST be present on the object before storing");
+            throw new InvalidOperationException("DocumentId and PartitionKey must be present before storing a document.");
+
+        string id = document.Id!;
+        string partitionKeyValue = document.PartitionKey!;
 
         ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
         if (useQueue)
         {
             // Snapshot everything we need up-front (no capturing document in the queued work item)
-            string id = document.Id;
-            string pk = document.PartitionKey;
+            string pk = partitionKeyValue;
             byte[] json = JsonUtil.SerializeToUtf8Bytes(document, JsonOptionType.Web);
             var partitionKey = new PartitionKey(pk);
             bool auditEnabled = AuditEnabled;
@@ -77,13 +78,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             return id;
         }
 
-        await container.CreateItemAsync(document, new PartitionKey(document.PartitionKey), options, cancellationToken)
+        await container.CreateItemAsync(document, new PartitionKey(partitionKeyValue), options, cancellationToken)
                        .NoSync();
 
         if (AuditEnabled)
-            await CreateAuditItem(CrudEventType.Create, document.Id, document, cancellationToken)
+            await CreateAuditItem(CrudEventType.Create, id, document, cancellationToken)
                 .NoSync();
 
-        return document.Id;
+        return id;
     }
 }

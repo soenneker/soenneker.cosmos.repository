@@ -82,12 +82,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (_auditLog && Logger.IsEnabled(LogLevel.Debug))
         {
-            string? serialized = JsonUtil.Serialize(auditItem, JsonOptionType.Pretty);
-            Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
+            Logger.LogDebug("-- COSMOS: {method} ({type}): event {eventType}, entity {entityId}", MethodUtil.Get(), typeof(TDocument).Name,
+                eventType, entityId);
         }
 
         byte[] json = JsonUtil.SerializeToUtf8Bytes(auditItem, JsonOptionType.Web);
-        await QueueAuditItem(json, auditItem.PartitionKey, cancellationToken).NoSync();
+        await QueueAuditItem(json, auditItem.PartitionKey!, cancellationToken).NoSync();
     }
 
     private async ValueTask QueueAuditItem(byte[] json, string partitionKey, CancellationToken cancellationToken)

@@ -9,19 +9,12 @@ using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
 using Soenneker.Utils.MemoryStream.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
-using Soenneker.Utils.PooledStringBuilders;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
-/// <inheritdoc cref="ICosmosRepository{TDocument}"/>
 public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TDocument>, ICosmosRepositoryContext where TDocument : Document
 {
     private const int _documentIdBatchSize = 50;
@@ -87,126 +80,8 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         if (!_log)
             return;
 
-        var queryText = query.ToString();
-
-        Logger.LogDebug("-- COSMOS: {method} ({type}): {query}", methodName, typeof(T).Name, queryText);
+        Logger.LogDebug("-- COSMOS: {method} ({type}): LINQ query", methodName, typeof(T).Name);
     }
 
-    private static string BuildQueryLogText(QueryDefinition queryDefinition)
-    {
-        string queryText = queryDefinition.QueryText;
-
-        IReadOnlyList<(string Name, object Value)> parameters = queryDefinition.GetQueryParameters();
-
-        if (parameters.Count == 0)
-            return queryText;
-
-        // Build lookup (ordinal is correct for parameter tokens)
-        var map = new Dictionary<string, object?>(parameters.Count, StringComparer.Ordinal);
-
-        for (var i = 0; i < parameters.Count; i++)
-        {
-            (string Name, object Value) p = parameters[i];
-            map[p.Name] = p.Value;
-        }
-
-        // Rough guess: output usually a bit longer because of quotes/"null"
-        var psb = new PooledStringBuilder(queryText.Length + parameters.Count * 8);
-
-        try
-        {
-            ReadOnlySpan<char> span = queryText.AsSpan();
-            ref char r0 = ref MemoryMarshal.GetReference(span);
-            int len = span.Length;
-
-            for (var i = 0; i < len; i++)
-            {
-                char c = Unsafe.Add(ref r0, i);
-
-                // Cosmos parameters typically start with '@'
-                if (c != '@')
-                {
-                    psb.Append(c);
-                    continue;
-                }
-
-                int start = i;
-                int j = i + 1;
-
-                while (j < len)
-                {
-                    char ch = Unsafe.Add(ref r0, j);
-                    if (ch == '_' || char.IsLetterOrDigit(ch))
-                    {
-                        j++;
-                        continue;
-                    }
-
-                    break;
-                }
-
-                // Just '@' by itself
-                if (j == start + 1)
-                {
-                    psb.Append('@');
-                    continue;
-                }
-
-                string token = span.Slice(start, j - start).ToString();
-
-                if (map.TryGetValue(token, out object? value))
-                {
-                    AppendFormattedValue(ref psb, value);
-                    i = j - 1; // skip token
-                }
-                else
-                {
-                    // no replacement found
-                    psb.Append(token);
-                    i = j - 1;
-                }
-            }
-
-            return psb.ToString();
-        }
-        finally
-        {
-            psb.Dispose();
-        }
-
-        static void AppendFormattedValue(ref PooledStringBuilder psb, object? value)
-        {
-            if (value is null)
-            {
-                psb.Append("null");
-                return;
-            }
-
-            switch (value)
-            {
-                case string s:
-                    psb.Append('"');
-                    psb.Append(s);
-                    psb.Append('"');
-                    return;
-
-                case DateTime dt:
-                    psb.Append('"');
-                    psb.Append(dt.ToString("O", CultureInfo.InvariantCulture));
-                    psb.Append('"');
-                    return;
-
-                case DateTimeOffset dto:
-                    psb.Append('"');
-                    psb.Append(dto.ToString("O", CultureInfo.InvariantCulture));
-                    psb.Append('"');
-                    return;
-
-                default:
-                    var str = Convert.ToString(value);
-                    psb.Append(str ?? "null");
-                    return;
-            }
-        }
-    }
+    private static string BuildQueryLogText(QueryDefinition queryDefinition) => queryDefinition.QueryText;
 }

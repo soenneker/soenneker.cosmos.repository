@@ -59,8 +59,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
-            string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
-            Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
+            Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, item.Id);
         }
 
         (string partitionKey, string documentId) = id.ToSplitId();
@@ -123,8 +122,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
-            string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
-            Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
+            Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, id);
         }
 
         (string partitionKey, string documentId) = id.ToSplitId();

@@ -64,22 +64,21 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             cancellationToken.ThrowIfCancellationRequested();
 
             TDocument item = documents[i];
+            string itemId = item.Id!;
 
             if (_log && Logger.IsEnabled(LogLevel.Debug))
             {
-                string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
-                Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
+                Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, itemId);
             }
 
             // Parse ID into partition key and document ID
-            (string partitionKey, string documentId) = item.Id.ToSplitId();
+            (string partitionKey, string documentId) = itemId.ToSplitId();
 
             // Precompute request options
             ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
 
             if (useQueue)
             {
-                string itemId = item.Id;
                 byte[] json = JsonUtil.SerializeToUtf8Bytes(item, JsonOptionType.Web);
                 var pk = new PartitionKey(partitionKey);
 
@@ -101,7 +100,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                               resp.EnsureSuccessStatusCode();
 
                                               if (s.AuditEnabled)
-                                                  await s.Self.CreateAuditItem(CrudEventType.Update, s.ItemId, /* entity */ null, token)
+                                                  await s.Self.CreateAuditItemFromUtf8(CrudEventType.Update, s.ItemId, s.Json, token)
                                                          .NoSync();
                                           }, cancellationToken)
                                       .NoSync();
@@ -113,7 +112,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                                           .NoSync();
 
                 if (AuditEnabled)
-                    await CreateAuditItem(CrudEventType.Update, item.Id, item, cancellationToken)
+                    await CreateAuditItem(CrudEventType.Update, itemId, item, cancellationToken)
                         .NoSync();
 
                 // Update the document in the original list
@@ -184,34 +183,24 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
                           // Read current item at execution time (in case caller mutated the list before execution starts)
                           TDocument item = s.Documents[s.Index];
+                          string itemId = item.Id!;
 
-                          try
+                          if (s.Log && s.Self.Logger.IsEnabled(LogLevel.Debug))
                           {
-                              if (s.Log && s.Self.Logger.IsEnabled(LogLevel.Debug))
-                              {
-                                  string? serialized = JsonUtil.Serialize(item, JsonOptionType.Pretty);
-                                  s.Self.Logger.LogDebug("-- COSMOS: {method} ({type}): {item}", MethodUtil.Get(), typeof(TDocument).Name, serialized);
-                              }
-
-                              (string partitionKey, string documentId) = item.Id.ToSplitId();
-
-                              ItemResponse<TDocument> response = await s
-                                                                       .Container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), s.Options,
-                                                                           ct)
-                                                                       .NoSync();
-
-                              // Audit only after Replace succeeds
-                              if (s.AuditEnabled)
-                                  await s.Self.CreateAuditItem(CrudEventType.Update, item.Id, item, ct)
-                                         .NoSync();
-
-                              // Safe: each state writes to a unique index
-                              s.Documents[s.Index] = response.Resource ?? item;
+                              s.Self.Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, itemId);
                           }
-                          catch (Exception ex)
-                          {
-                              s.Self.Logger.LogError(ex, "Error updating document with ID: {id}", item.Id);
-                          }
+
+                          (string partitionKey, string documentId) = itemId.ToSplitId();
+
+                          ItemResponse<TDocument> response = await s.Container
+                                                                            .ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), s.Options, ct)
+                                                                            .NoSync();
+
+                          if (s.AuditEnabled)
+                              await s.Self.CreateAuditItem(CrudEventType.Update, itemId, item, ct)
+                                     .NoSync();
+
+                          s.Documents[s.Index] = response.Resource ?? item;
                       }, cancellationToken)
                       .NoSync();
 

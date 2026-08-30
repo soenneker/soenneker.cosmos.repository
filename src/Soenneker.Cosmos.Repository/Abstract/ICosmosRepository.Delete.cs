@@ -23,8 +23,8 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     ValueTask DeleteItemIfMatch(CosmosItem<TDocument> item, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Hard deletes one item by Id (partition and document, or one guid if they're the same).
-    /// Will not throw.
+    /// Hard-deletes one item by full ID (partition key and document ID, or one value when they are the same).
+    /// A missing document is treated as already deleted; other failures propagate.
     /// </summary>
     /// <param name="entityId">Identifier of the entity to target.</param>
     /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
@@ -76,7 +76,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Deletes items.
     /// </summary>
-    /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
+    /// <param name="query">The Cosmos LINQ query selecting documents to delete.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
@@ -86,7 +86,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <summary>
     /// Deletes items parallel.
     /// </summary>
-    /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
+    /// <param name="query">The Cosmos LINQ query selecting documents to delete.</param>
     /// <param name="maxConcurrency">Maximum number of operations allowed to run concurrently.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>

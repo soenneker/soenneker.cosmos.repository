@@ -31,7 +31,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, cancellationToken: cancellationToken).NoSync();
         query = query.OrderBy(static c => c.CreatedAt);
 
-        IQueryable<IdOnlyProjection> projected = query.Select(static c => new IdOnlyProjection(c.DocumentId, c.PartitionKey));
+        IQueryable<IdOnlyProjection> projected = query.Select(static c => new IdOnlyProjection(c.DocumentId!, c.PartitionKey!));
 
         await ExecuteOnGetItemsPaged(projected, async results =>
         {
@@ -42,7 +42,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 IdOnlyProjection result = results[i];
 
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue, cancellationToken).NoSync();
+                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken).NoSync();
 
                 if (delay.HasValue)
                     await Task.Delay(delay.Value, cancellationToken).NoSync();
@@ -75,7 +75,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 TDocument result = results[i];
 
-                await DeleteItem(result.DocumentId, result.PartitionKey, useQueue, cancellationToken).NoSync();
+                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken).NoSync();
 
                 if (delay.HasValue)
                     await Task.Delay(delay.Value, cancellationToken).NoSync();
@@ -96,14 +96,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
         IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, cancellationToken: cancellationToken).NoSync();
         IQueryable<IdOnlyProjection> projected = query.OrderBy(static c => c.CreatedAt)
-                                                       .Select(static c => new IdOnlyProjection(c.DocumentId, c.PartitionKey));
+                                                       .Select(static c => new IdOnlyProjection(c.DocumentId!, c.PartitionKey!));
         var executor = new ConcurrentProcessingExecutor(maxConcurrency, Logger);
 
         await ExecuteOnGetItemsPaged(projected, async results =>
         {
             await executor.Execute(results, async (result, ct) =>
             {
-                await DeleteItemWithContainer(container, result.DocumentId, result.PartitionKey, useQueue: false, ct).NoSync();
+                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct).NoSync();
             }, cancellationToken).NoSync();
         }, cancellationToken).NoSync();
     }
@@ -121,7 +121,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await executor.Execute(results, async (result, ct) =>
             {
-                await DeleteItemWithContainer(container, result.DocumentId, result.PartitionKey, useQueue: false, ct).NoSync();
+                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct).NoSync();
             }, cancellationToken).NoSync();
         }, cancellationToken).NoSync();
     }
