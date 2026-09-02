@@ -11,7 +11,7 @@ namespace Soenneker.Cosmos.Repository.Tests;
 public class PagingExecuteTests
 {
     [Test]
-    public async Task ExecuteOnFeedIteratorProcessesEveryPageOnce()
+    public async Task ExecuteOnFeedIteratorProcessesEveryPageOnce(CancellationToken cancellationToken)
     {
         var iterator = new TestFeedIterator<int>([[1, 2], [3], [4, 5]]);
         var processedPages = new List<List<int>>();
@@ -20,7 +20,7 @@ public class PagingExecuteTests
         {
             processedPages.Add([.. page]);
             return ValueTask.CompletedTask;
-        });
+        }, cancellationToken);
 
         await Assert.That(iterator.ReadCount).IsEqualTo(3);
         await Assert.That(processedPages).IsEquivalentTo(new List<List<int>>
