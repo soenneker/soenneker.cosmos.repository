@@ -44,13 +44,13 @@
     <ItemGroup>
         <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="4.0.327" />
         <PackageReference Include="Soenneker.Constants.Data" Version="4.0.642" />
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="4.0.2516" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="4.0.2517" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="4.0.176" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="4.0.2583" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="4.0.2584" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="4.0.724" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="4.0.726" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2479" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2675" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2676" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.461" />
         <PackageReference Include="Soenneker.Utils.UserContext" Version="4.0.1789" />
     </ItemGroup>
