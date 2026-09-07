@@ -68,7 +68,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     private void LogQuery<T>(QueryDefinition queryDefinition, string? methodName)
     {
-        if (!_log)
+        if (!_log || !Logger.IsEnabled(LogLevel.Debug))
             return;
 
         string queryText = BuildQueryLogText(queryDefinition);
@@ -78,7 +78,7 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     private void LogQuery<T>(IQueryable query, string? methodName)
     {
-        if (!_log)
+        if (!_log || !Logger.IsEnabled(LogLevel.Debug))
             return;
 
         Logger.LogDebug("-- COSMOS: {method} ({type}): LINQ query", methodName, typeof(T).Name);

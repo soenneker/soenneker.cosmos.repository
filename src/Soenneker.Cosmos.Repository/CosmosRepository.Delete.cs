@@ -58,7 +58,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public async ValueTask DeleteItems(IQueryable<TDocument> query, double? delayMs = null, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Warning))
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         List<IdPartitionPair> ids = await GetIds(query, delayMs, cancellationToken)
@@ -71,7 +71,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public async ValueTask DeleteItemsParallel(IQueryable<TDocument> query, int maxConcurrency, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Warning))
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         List<IdPartitionPair> ids = await GetIds(query, delayMs, cancellationToken)
@@ -97,7 +97,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask DeleteIdsCore(List<IdPartitionPair> ids, IReadOnlyDictionary<string, string>? expectedETags, double? delayMs,
         bool useQueue, CancellationToken cancellationToken)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name,
                 delayMs.GetValueOrDefault());
@@ -123,7 +123,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                                .NoSync();
         }
 
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
         }
@@ -144,7 +144,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask DeleteIdsParallelCore(List<IdPartitionPair> ids, IReadOnlyDictionary<string, string>? expectedETags,
         int maxConcurrency, CancellationToken cancellationToken)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         var executor = new ConcurrentProcessingExecutor(maxConcurrency, Logger);
@@ -164,7 +164,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                       }, cancellationToken)
                       .NoSync();
 
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
@@ -186,7 +186,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask DeleteItemWithContainerCore(Microsoft.Azure.Cosmos.Container container, string documentId, string partitionKey,
         string? expectedETag, bool useQueue, CancellationToken ct)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug("-- COSMOS: {method} ({type}): DocID: {documentId}, PartitionKey: {partitionKey}", MethodUtil.Get(), typeof(TDocument).Name,
                 documentId, partitionKey);

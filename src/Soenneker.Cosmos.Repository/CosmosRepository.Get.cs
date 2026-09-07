@@ -104,7 +104,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     {
         try
         {
-            if (_log)
+            if (_log && Logger.IsEnabled(LogLevel.Debug))
             {
                 string logId = documentId == partitionKey
                     ? documentId

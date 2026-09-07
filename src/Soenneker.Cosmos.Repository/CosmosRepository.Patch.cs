@@ -100,7 +100,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask<TDocument?> PatchItemCore(string id, List<PatchOperation> operations, bool useQueue,
         CancellationToken cancellationToken)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         (string partitionKey, string documentId) = id.ToSplitId();
@@ -152,7 +152,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask<CosmosItem<TDocument>> PatchItemIfMatchWithContainer(Microsoft.Azure.Cosmos.Container container, string id,
         IReadOnlyList<PatchOperation> operations, string expectedETag, CancellationToken cancellationToken)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         (string partitionKey, string documentId) = id.ToSplitId();

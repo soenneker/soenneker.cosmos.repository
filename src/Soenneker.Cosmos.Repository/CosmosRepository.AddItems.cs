@@ -16,7 +16,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false,
         bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name,
                 delayMs.GetValueOrDefault());
@@ -56,7 +56,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<List<TDocument>> AddItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
-        if (_log)
+        if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
