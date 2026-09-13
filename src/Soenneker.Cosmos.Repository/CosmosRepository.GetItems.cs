@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
 using Soenneker.Documents.Document;
 using Soenneker.Dtos.IdNamePair;
 using Soenneker.Dtos.IdPartitionPair;
@@ -75,10 +75,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 {
                     results.EnsureCapacity(results.Count + page.Count);
 
-                    foreach (TDocument item in page)
-                    {
-                        results.Add(item);
-                    }
+                    results.AddRange(page.Resource);
                 }
             }
         }
@@ -109,27 +106,25 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return response.Resource as List<TDocument> ?? response.Resource.ToList();
     }
 
-    public ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default)
+    public async ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default)
     {
         int count = pairs.Count;
 
         if (count == 0)
-            return new ValueTask<List<TDocument>>([]);
+            return [];
 
-        var idPartitionPairs = new List<IdPartitionPair>(count);
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+        var items = new List<(string id, PartitionKey pk)>(count);
 
         for (int i = 0; i < count; i++)
         {
             IdNamePair pair = pairs[i];
 
-            idPartitionPairs.Add(new IdPartitionPair
-            {
-                Id = pair.Id,
-                PartitionKey = pair.Id
-            });
+            items.Add((pair.Id, new PartitionKey(pair.Id)));
         }
 
-        return GetAllByIdPartitionPairs(idPartitionPairs, cancellationToken);
+        FeedResponse<TDocument> response = await container.ReadManyItemsAsync<TDocument>(items, cancellationToken: cancellationToken).NoSync();
+        return response.Resource as List<TDocument> ?? response.Resource.ToList();
     }
 
     public ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default)
@@ -165,7 +160,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
-        var results = new List<IdPartitionPair>(128);
+        var results = new List<IdPartitionPair>();
 
         while (it.HasMoreResults)
         {
@@ -178,11 +173,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             if (pageCount > 0)
             {
                 results.EnsureCapacity(results.Count + pageCount);
-
-                foreach (IdPartitionPair item in page)
-                {
-                    results.Add(item);
-                }
+                results.AddRange(page.Resource);
 
                 if (delay.HasValue)
                     await DelayUtil.Delay(delay.Value, null, cancellationToken)
@@ -242,7 +233,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     private static async ValueTask<List<T>> DrainIterator<T>(FeedIterator<T> iterator, TimeSpan? interPageDelay, CancellationToken cancellationToken)
     {
-        var results = new List<T>(16);
+        var results = new List<T>();
 
         while (iterator.HasMoreResults)
         {
@@ -255,11 +246,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             if (pageCount > 0)
             {
                 results.EnsureCapacity(results.Count + pageCount);
-
-                foreach (T item in page)
-                {
-                    results.Add(item);
-                }
+                results.AddRange(page.Resource);
 
                 if (interPageDelay.HasValue)
                     await DelayUtil.Delay(interPageDelay.Value, null, cancellationToken)

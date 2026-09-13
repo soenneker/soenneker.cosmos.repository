@@ -24,15 +24,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return PatchItemIfMatch(GetRequiredId(item.Document), operations, item.ETag, cancellationToken);
     }
 
-    public async ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null,
+    public ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null,
         bool useQueue = false, CancellationToken cancellationToken = default)
     {
-        return await PatchItemsCore(documents, operations, delayMs, useQueue, cancellationToken).NoSync();
+        return PatchItemsCore(documents, operations, delayMs, useQueue, cancellationToken);
     }
 
     public async ValueTask<List<CosmosItem<TDocument>>> PatchItemsIfMatch(List<CosmosItem<TDocument>> items,
         List<PatchOperation> operations, double? delayMs = null, CancellationToken cancellationToken = default)
     {
+        if (items.Count == 0)
+            return items;
+
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
         TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
@@ -54,6 +57,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask<List<TDocument>> PatchItemsCore(List<TDocument> documents, List<PatchOperation> operations, double? delayMs,
         bool useQueue, CancellationToken cancellationToken)
     {
+        // Resolve once for the entire batch.
+        if (documents.Count == 0)
+            return documents;
+
+        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
+
         // Precompute delay once
         TimeSpan? timespanDelay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
@@ -63,7 +72,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken)
+                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken, container)
                     .NoSync();
                 await DelayUtil.Delay(timespanDelay.Value, null, cancellationToken)
                                .NoSync();
@@ -75,7 +84,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken)
+                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken, container)
                     .NoSync();
             }
         }
@@ -83,10 +92,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return documents;
     }
 
-    public async ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
+    public ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
         CancellationToken cancellationToken = default)
     {
-        return await PatchItemCore(id, operations, useQueue, cancellationToken).NoSync();
+        return PatchItemCore(id, operations, useQueue, cancellationToken);
     }
 
     public async ValueTask<CosmosItem<TDocument>> PatchItemIfMatch(string id, List<PatchOperation> operations, string expectedETag,
@@ -98,15 +107,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     private async ValueTask<TDocument?> PatchItemCore(string id, List<PatchOperation> operations, bool useQueue,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, Microsoft.Azure.Cosmos.Container? resolvedContainer = null)
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
-            .NoSync();
+        Microsoft.Azure.Cosmos.Container container = resolvedContainer ?? await Container(cancellationToken).NoSync();
 
         if (useQueue)
         {

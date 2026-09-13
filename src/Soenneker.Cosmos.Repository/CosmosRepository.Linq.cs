@@ -96,20 +96,27 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         using FeedIterator<T> iterator = query.Take(1)
                                               .ToFeedIterator();
 
-        if (!iterator.HasMoreResults)
-            return default;
+        return await ReadFirst(iterator, cancellationToken).NoSync();
+    }
 
-        FeedResponse<T> page = await iterator.ReadNextAsync(cancellationToken)
-                                             .NoSync();
+    private static async ValueTask<T?> ReadFirst<T>(FeedIterator<T> iterator, CancellationToken cancellationToken)
+    {
+        while (iterator.HasMoreResults)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            FeedResponse<T> page = await iterator.ReadNextAsync(cancellationToken).NoSync();
+            if (page.Count == 0)
+                continue;
 
-        if (page.Count == 0)
-            return default;
+            if (page.Resource is IReadOnlyList<T> list)
+                return list[0];
 
-        if (page.Resource is IReadOnlyList<T> list)
-            return list[0];
+            using IEnumerator<T> enumerator = page.Resource.GetEnumerator();
+            if (enumerator.MoveNext())
+                return enumerator.Current;
+        }
 
-        using IEnumerator<T> enumerator = page.Resource.GetEnumerator();
-        return enumerator.MoveNext() ? enumerator.Current : default;
+        return default;
     }
 
     public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default)

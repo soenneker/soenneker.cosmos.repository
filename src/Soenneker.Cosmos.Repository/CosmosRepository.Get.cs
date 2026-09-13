@@ -62,14 +62,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             EnableOptimisticDirectExecution = true
         });
 
-        FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();
-
-        int count = page.Count;
-        if (count == 0)
-            return null;
-
-        using IEnumerator<TDocument> e = page.Resource.GetEnumerator();
-        return e.MoveNext() ? e.Current : null;
+        return await ReadFirst(it, cancellationToken).NoSync();
     }
 
     public async ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
@@ -85,14 +78,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             EnableOptimisticDirectExecution = true
         });
 
-        FeedResponse<TDocument> page = await it.ReadNextAsync(cancellationToken).NoSync();
-
-        int count = page.Count;
-        if (count == 0)
-            return null;
-
-        using IEnumerator<TDocument> e = page.Resource.GetEnumerator();
-        return e.MoveNext() ? e.Current : null;
+        return await ReadFirst(it, cancellationToken).NoSync();
     }
 
     public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)

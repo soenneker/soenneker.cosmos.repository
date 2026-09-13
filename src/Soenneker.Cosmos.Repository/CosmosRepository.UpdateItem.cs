@@ -39,10 +39,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return UpdateItemIfMatchCore(GetRequiredId(item), item, expectedETag, cancellationToken);
     }
 
-    public async ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false,
+    public ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
-        return await UpdateItemCore(id, item, useQueue, excludeResponse, cancellationToken).NoSync();
+        return UpdateItemCore(id, item, useQueue, excludeResponse, cancellationToken);
     }
 
     public ValueTask<CosmosItem<TDocument>> UpdateItemIfMatch(string id, TDocument item, string expectedETag,

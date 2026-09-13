@@ -9,6 +9,7 @@ using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
 using Soenneker.Utils.MemoryStream.Abstract;
 using Soenneker.Utils.UserContext.Abstract;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,8 +61,8 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
 
     public virtual PartitionKey ResolvePartitionKey(string entityId)
     {
-        (string partitionKey, string _) = entityId.ToSplitId();
-        return new PartitionKey(partitionKey);
+        (Range partition, _) = entityId.ToSplitIdRanges();
+        return new PartitionKey(entityId[partition]);
     }
 
     // TODO: Log response

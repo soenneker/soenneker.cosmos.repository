@@ -38,16 +38,23 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
-        using FeedIterator<TDocument> iterator = query.Take(1)
+        using FeedIterator<int> iterator = query.Select(static _ => 1).Take(1)
                                                       .ToFeedIterator();
 
-        if (!iterator.HasMoreResults)
-            return false;
+        return await HasAnyResults(iterator, cancellationToken).NoSync();
+    }
 
-        FeedResponse<TDocument> response = await iterator.ReadNextAsync(cancellationToken)
-                                                         .NoSync();
+    private static async ValueTask<bool> HasAnyResults<T>(FeedIterator<T> iterator, CancellationToken cancellationToken)
+    {
+        while (iterator.HasMoreResults)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken).NoSync();
+            if (response.Count > 0)
+                return true;
+        }
 
-        return response.Count > 0;
+        return false;
     }
 
     public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
@@ -64,12 +71,6 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             EnableOptimisticDirectExecution = true
         });
 
-        if (!it.HasMoreResults)
-            return false;
-
-        FeedResponse<int> response = await it.ReadNextAsync(cancellationToken)
-                                             .NoSync();
-
-        return response.Count > 0;
+        return await HasAnyResults(it, cancellationToken).NoSync();
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Audit;
@@ -23,8 +23,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public AuditDocument BuildDbEventAuditRecord(CrudEventType eventType, string entityId, object? entity, string? userId)
     {
         // The PartitionKey of the AuditRow is the Document Id of the target entity
-        string partitionKey = entityId.ToSplitId()
-                                      .DocumentId;
+        (_, Range document) = entityId.ToSplitIdRanges();
+        string partitionKey = entityId[document];
 
         return new AuditDocument
         {

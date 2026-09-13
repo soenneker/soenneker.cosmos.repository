@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +16,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<List<TDocument>> AddItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false,
         bool excludeResponse = false, CancellationToken cancellationToken = default)
     {
+        if (documents.Count == 0)
+            return documents;
+
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name,
@@ -56,6 +59,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<List<TDocument>> AddItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxConcurrency, 1);
+        if (documents.Count == 0)
+            return documents;
+
         if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
@@ -64,29 +71,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         var executor = new ConcurrentProcessingExecutor(maxConcurrency, Logger);
 
-        // Build state list (no per-item closures)
-        var states = new List<AddItemState>(documents.Count);
-        for (var i = 0; i < documents.Count; i++)
+        await executor.Execute(documents, async (document, ct) =>
         {
-            states.Add(new AddItemState(Self: this, Container: container, Document: documents[i], ExcludeResponse: excludeResponse));
-        }
-
-        await executor.Execute(states, static async (s, ct) =>
-                      {
-                          ct.ThrowIfCancellationRequested();
-
-                          s.Document.Id = await s.Self.InternalAddItemWithContainer(s.Document, s.Container, useQueue: false,
-                                                     excludeResponse: s.ExcludeResponse, cancellationToken: ct)
-                                                 .NoSync();
-                      }, cancellationToken)
-                      .NoSync();
+            document.Id = await InternalAddItemWithContainer(document, container, useQueue: false,
+                excludeResponse: excludeResponse, cancellationToken: ct).NoSync();
+        }, cancellationToken).NoSync();
 
         return documents;
     }
 
-    private readonly record struct AddItemState(
-        CosmosRepository<TDocument> Self,
-        Microsoft.Azure.Cosmos.Container Container,
-        TDocument Document,
-        bool ExcludeResponse);
 }

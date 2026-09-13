@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -23,15 +23,18 @@ namespace Soenneker.Cosmos.Repository;
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     // Avoids container lookup per item, thus not using UpdateItem
-    public async ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
+    public ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
-        return await UpdateItemsCore(documents, delayMs, useQueue, excludeResponse, cancellationToken).NoSync();
+        return UpdateItemsCore(documents, delayMs, useQueue, excludeResponse, cancellationToken);
     }
 
     public async ValueTask<List<CosmosItem<TDocument>>> UpdateItemsIfMatch(List<CosmosItem<TDocument>> items, double? delayMs = null,
         CancellationToken cancellationToken = default)
     {
+        if (items.Count == 0)
+            return items;
+
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
         TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
 
@@ -53,6 +56,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask<List<TDocument>> UpdateItemsCore(List<TDocument> documents, double? delayMs, bool useQueue, bool excludeResponse,
         CancellationToken cancellationToken)
     {
+        if (documents.Count == 0)
+            return documents;
+
         // Fetch the container once
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -127,33 +133,32 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return documents;
     }
 
-    public async ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
+    public ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
         CancellationToken cancellationToken = default)
     {
-        return await UpdateItemsParallelCore(documents, maxConcurrency, excludeResponse, cancellationToken).NoSync();
+        return UpdateItemsParallelCore(documents, maxConcurrency, excludeResponse, cancellationToken);
     }
 
     public async ValueTask<List<CosmosItem<TDocument>>> UpdateItemsParallelIfMatch(List<CosmosItem<TDocument>> items, int maxConcurrency,
         CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxConcurrency, 1);
+        if (items.Count == 0)
+            return items;
+
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
         var executor = new ConcurrentProcessingExecutor(maxConcurrency, Logger);
 
-        var states = new List<ConditionalUpdateState>(items.Count);
         for (var i = 0; i < items.Count; i++)
-        {
             ArgumentException.ThrowIfNullOrWhiteSpace(items[i].ETag);
-            states.Add(new ConditionalUpdateState(this, container, items, i));
-        }
 
-        await executor.Execute(states, static async (s, ct) =>
-                      {
-                          CosmosItem<TDocument> item = s.Items[s.Index];
-                          s.Items[s.Index] = await s.Self
-                                                  .UpdateItemIfMatchWithContainer(s.Container, GetRequiredId(item.Document), item.Document, item.ETag, ct)
-                                                  .NoSync();
-                      }, cancellationToken)
-                      .NoSync();
+        var state = (Self: this, Container: container, Items: items);
+        await executor.Execute(new IndexRange(items.Count), async (index, ct) =>
+        {
+            CosmosItem<TDocument> item = state.Items[index];
+            state.Items[index] = await state.Self.UpdateItemIfMatchWithContainer(state.Container, GetRequiredId(item.Document),
+                item.Document, item.ETag, ct).NoSync();
+        }, cancellationToken).NoSync();
 
         return items;
     }
@@ -161,6 +166,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private async ValueTask<List<TDocument>> UpdateItemsParallelCore(List<TDocument> documents, int maxConcurrency, bool excludeResponse,
         CancellationToken cancellationToken)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxConcurrency, 1);
+        if (documents.Count == 0)
+            return documents;
+
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
@@ -168,57 +177,27 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         bool auditEnabled = AuditEnabled;
 
-        var states = new List<UpdateState>(documents.Count);
-        for (var i = 0; i < documents.Count; i++)
+        var state = (Self: this, Container: container, Documents: documents, ExcludeResponse: excludeResponse, AuditEnabled: auditEnabled, Log: _log);
+        await executor.Execute(new IndexRange(documents.Count), async (index, ct) =>
         {
-            TDocument document = documents[i];
-            ItemRequestOptions? options = excludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
-            states.Add(new UpdateState(Self: this, Container: container, Documents: documents, Index: i, Options: options,
-                AuditEnabled: auditEnabled, Log: _log));
-        }
+            ct.ThrowIfCancellationRequested();
+            TDocument item = state.Documents[index];
+            string itemId = item.Id!;
 
-        await executor.Execute(states, static async (s, ct) =>
-                      {
-                          ct.ThrowIfCancellationRequested();
+            if (state.Log && state.Self.Logger.IsEnabled(LogLevel.Debug))
+                state.Self.Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, itemId);
 
-                          // Read current item at execution time (in case caller mutated the list before execution starts)
-                          TDocument item = s.Documents[s.Index];
-                          string itemId = item.Id!;
+            (string partitionKey, string documentId) = itemId.ToSplitId();
+            ItemRequestOptions? options = state.ExcludeResponse ? CosmosRequestOptions.ExcludeResponse : null;
+            ItemResponse<TDocument> response = await state.Container.ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), options, ct)
+                .NoSync();
 
-                          if (s.Log && s.Self.Logger.IsEnabled(LogLevel.Debug))
-                          {
-                              s.Self.Logger.LogDebug("-- COSMOS: {method} ({type}): {id}", MethodUtil.Get(), typeof(TDocument).Name, itemId);
-                          }
+            if (state.AuditEnabled)
+                await state.Self.CreateAuditItem(CrudEventType.Update, itemId, item, ct).NoSync();
 
-                          (string partitionKey, string documentId) = itemId.ToSplitId();
-
-                          ItemResponse<TDocument> response = await s.Container
-                                                                            .ReplaceItemAsync(item, documentId, new PartitionKey(partitionKey), s.Options, ct)
-                                                                            .NoSync();
-
-                          if (s.AuditEnabled)
-                              await s.Self.CreateAuditItem(CrudEventType.Update, itemId, item, ct)
-                                     .NoSync();
-
-                          s.Documents[s.Index] = response.Resource ?? item;
-                      }, cancellationToken)
-                      .NoSync();
+            state.Documents[index] = response.Resource ?? item;
+        }, cancellationToken).NoSync();
 
         return documents;
     }
-
-    private readonly record struct UpdateState(
-        CosmosRepository<TDocument> Self,
-        Microsoft.Azure.Cosmos.Container Container,
-        List<TDocument> Documents,
-        int Index,
-        ItemRequestOptions? Options,
-        bool AuditEnabled,
-        bool Log);
-
-    private readonly record struct ConditionalUpdateState(
-        CosmosRepository<TDocument> Self,
-        Microsoft.Azure.Cosmos.Container Container,
-        List<CosmosItem<TDocument>> Items,
-        int Index);
 }
