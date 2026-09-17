@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Soenneker.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -38,6 +39,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<bool> Exists(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         using FeedIterator<int> iterator = query.Select(static _ => 1).Take(1)
                                                       .ToFeedIterator();
 

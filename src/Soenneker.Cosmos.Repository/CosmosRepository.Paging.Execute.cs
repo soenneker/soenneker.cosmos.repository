@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Soenneker.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -18,6 +19,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> query, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         using FeedIterator<T> iterator = query.ToFeedIterator();
         await ExecuteOnFeedIterator(iterator, resultTask, cancellationToken).NoSync();
     }

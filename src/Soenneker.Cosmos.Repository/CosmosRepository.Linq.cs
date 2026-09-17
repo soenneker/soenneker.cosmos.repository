@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Soenneker.Cosmos.Linq;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
@@ -68,6 +69,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<int> Count(IQueryable<TDocument> query, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         Response<int> response = await query.CountAsync(cancellationToken: cancellationToken)
                                             .NoSync();
 
@@ -91,6 +94,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<T?> GetItem<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         LogQuery<T>(query, MethodUtil.Get());
 
         using FeedIterator<T> iterator = query.Take(1)
@@ -121,6 +126,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<T>> GetItems<T>(IQueryable<T> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         LogQuery<T>(query, MethodUtil.Get());
 
         TimeSpan? delay = delayMs.HasValue ? TimeSpan.FromMilliseconds(delayMs.Value) : null;
@@ -133,6 +140,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     public async ValueTask<List<TDocument>> GetItems(IQueryable<TDocument> query, double? delayMs = null, CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         LogQuery<TDocument>(query, MethodUtil.Get());
 
         using FeedIterator<TDocument>? iterator = query.ToFeedIterator();

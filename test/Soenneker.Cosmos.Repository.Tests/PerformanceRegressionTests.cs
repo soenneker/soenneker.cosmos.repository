@@ -106,6 +106,31 @@ public class PerformanceRegressionTests
     }
 
     [Test]
+    public async Task PagedLinqRewritesCallerNullFiltersBeforeCreatingQueryDefinition()
+    {
+        using var client = new CosmosClient("https://localhost:8081", Convert.ToBase64String(new byte[64]));
+        IQueryable<TestDocument> query = client.GetContainer("test", "test").GetItemLinqQueryable<TestDocument>();
+        query = query.Where(d => d.DocumentId == null);
+        string expectedSql = client.GetContainer("test", "test").GetItemLinqQueryable<TestDocument>()
+            .Where(d => !d.DocumentId.IsDefined() || d.DocumentId.IsNull()).ToQueryDefinition().QueryText;
+        var iterator = new TestIterator<TestDocument>([[]]);
+        var container = new Mock<Microsoft.Azure.Cosmos.Container>();
+        container.Setup(c => c.GetItemQueryIterator<TestDocument>(It.IsAny<QueryDefinition>(), "resume", It.IsAny<QueryRequestOptions>()))
+            .Callback<QueryDefinition, string, QueryRequestOptions>((definition, _, options) =>
+            {
+                definition.QueryText.Should().Be(expectedSql);
+                options.MaxItemCount.Should().Be(25);
+            }).Returns(iterator);
+
+        var result = await CreateRepository(container.Object).GetItemsPaged(query, 25, "resume");
+
+        result.items.Should().BeEmpty();
+        iterator.ReadCount.Should().Be(1);
+        iterator.Disposed.Should().BeTrue();
+        container.Verify(c => c.GetItemQueryIterator<TestDocument>(It.IsAny<QueryDefinition>(), "resume", It.IsAny<QueryRequestOptions>()), Times.Once);
+    }
+
+    [Test]
     public void ExistsProjectionTranslatesToConstantSql()
     {
         using var client = new CosmosClient("https://localhost:8081", Convert.ToBase64String(new byte[64]));

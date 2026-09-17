@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using Soenneker.Cosmos.Linq;
 using Microsoft.Extensions.Logging;
 using Soenneker.Constants.Data;
 using Soenneker.Documents.Document;
@@ -75,6 +76,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual async ValueTask<(List<T> items, string? continuationToken)> GetItemsPaged<T>(IQueryable<T> query,
         CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         if (_log)
             LogQuery<T>(query, MethodUtil.Get());
 
@@ -104,6 +107,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
         CancellationToken cancellationToken = default)
     {
+        query = query.WithNullSemantics();
+
         return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, cancellationToken);
     }
 }
