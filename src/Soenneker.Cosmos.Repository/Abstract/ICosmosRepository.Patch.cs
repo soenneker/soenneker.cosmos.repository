@@ -30,8 +30,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by patch Items.</returns>
-    ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
 
     /// <summary>
     /// Patches every wrapped document only when its current ETag matches and returns each new ETag.
@@ -51,8 +53,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="operations">Operations to execute, in order.</param>
     /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the t Document returned by patch Item.</returns>
-    ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false, CancellationToken cancellationToken = default);
+    ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
 
     /// <summary>
     /// Patches an item only when its current ETag matches <paramref name="expectedETag"/>.

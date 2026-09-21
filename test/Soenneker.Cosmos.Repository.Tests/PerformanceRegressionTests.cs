@@ -20,13 +20,13 @@ using Soenneker.Utils.UserContext.Abstract;
 
 namespace Soenneker.Cosmos.Repository.Tests;
 
-public class PerformanceRegressionTests
+public partial class PerformanceRegressionTests
 {
     [Test]
     public async Task ParallelAddsProcessEveryDocumentOnce()
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
-        int[] seen = new int[32];
+        var seen = new int[32];
         container.Setup(c => c.CreateItemAsync(It.IsAny<TestDocument>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
             .Returns(async (TestDocument doc, PartitionKey? pk, ItemRequestOptions options, CancellationToken ct) =>
             {
@@ -38,7 +38,7 @@ public class PerformanceRegressionTests
         var documents = Enumerable.Range(0, seen.Length).Select(i => new TestDocument { DocumentId = i.ToString(), PartitionKey = "pk" }).ToList();
         (await CreateRepository(container.Object).AddItemsParallel(documents, 4)).Should().BeSameAs(documents);
         seen.Should().OnlyContain(count => count == 1);
-        for (int i = 0; i < documents.Count; i++)
+        for (var i = 0; i < documents.Count; i++)
             documents[i].Id.Should().Be("pk:" + i);
     }
 
@@ -152,7 +152,7 @@ public class PerformanceRegressionTests
                 pairs[0].Should().Be(("a", new PartitionKey("a")));
                 pairs[1].Should().Be(("b", new PartitionKey("b")));
             }).ReturnsAsync(response);
-        var result = await CreateRepository(container.Object).GetAllByIdNamePairs([new() { Id = "a", Name = "A" }, new() { Id = "b", Name = "B" }]);
+        var result = await CreateRepository(container.Object).GetAllByIdNamePairs([new IdNamePair { Id = "a", Name = "A" }, new IdNamePair { Id = "b", Name = "B" }]);
         result.Should().BeSameAs(documents);
     }
 
@@ -178,7 +178,7 @@ public class PerformanceRegressionTests
         var repo = CreateRepository(container.Object);
         (await repo.UpdateItemsParallel(documents, 4)).Should().BeSameAs(documents);
         peak.Should().BeInRange(2, 4);
-        for (int i = 0; i < documents.Count; i++)
+        for (var i = 0; i < documents.Count; i++)
         {
             documents[i].DocumentId.Should().Be(i.ToString());
             documents[i].Updated.Should().BeTrue();
@@ -188,20 +188,24 @@ public class PerformanceRegressionTests
         conditional.Should().OnlyContain(item => item.ETag == "new-etag");
     }
 
-    private static TestRepository CreateRepository(Microsoft.Azure.Cosmos.Container container)
+    private static TestRepository CreateRepository(Microsoft.Azure.Cosmos.Container container,
+        CosmosReadOptions? readOptions = null, CosmosWriteOptions? writeOptions = null)
     {
         var util = new Mock<ICosmosContainerUtil>();
         util.Setup(u => u.Get("test", It.IsAny<CancellationToken>())).Returns(new ValueTask<Microsoft.Azure.Cosmos.Container>(container));
-        return new TestRepository(util.Object);
+        return new TestRepository(util.Object, readOptions, writeOptions);
     }
 
     public sealed class TestDocument : Document { public bool Updated { get; set; } }
-    private sealed class TestRepository(ICosmosContainerUtil util) : CosmosRepository<TestDocument>(util,
+    private sealed class TestRepository(ICosmosContainerUtil util, CosmosReadOptions? readOptions = null,
+        CosmosWriteOptions? writeOptions = null) : CosmosRepository<TestDocument>(util,
         new ConfigurationBuilder().Build(), NullLogger<CosmosRepository<TestDocument>>.Instance,
         Mock.Of<IUserContext>(), Mock.Of<IBackgroundQueue>(), Mock.Of<IMemoryStreamUtil>())
     {
         public override string ContainerName => "test";
         public override bool AuditEnabled => false;
+        public override CosmosReadOptions? DefaultReadOptions => readOptions;
+        public override CosmosWriteOptions? DefaultWriteOptions => writeOptions;
     }
 
     private sealed class TestIterator<T>(IReadOnlyList<IReadOnlyList<T>> pages) : FeedIterator<T>

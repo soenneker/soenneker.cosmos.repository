@@ -23,7 +23,7 @@ public abstract partial class CosmosRepository<TDocument>
 
         public IEnumerator<int> GetEnumerator()
         {
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 yield return i;
         }
 

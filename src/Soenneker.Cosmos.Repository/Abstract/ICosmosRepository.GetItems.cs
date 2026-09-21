@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -20,9 +21,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAll(double? delayMs = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Careful, could be heavy. You may want <see cref="GetAllPaged"/> if the number of items are large (due to app memory limitations)
@@ -30,9 +32,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="partitionKey">Partition key used to route the database operation.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All By Partition Key.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Get items given a string SQL query directly. Typically should avoid (use specification, parameterization concerns, etc)
@@ -40,36 +44,43 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get Items.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Retrieves documents by ID across every partition. This fans out and can be slow and request-unit intensive.
     /// </summary>
     /// <param name="ids">Document IDs to retrieve.</param>
     /// <param name="cancellationToken">Token used to cancel the cross-partition reads.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result contains each document that was found.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> ids, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> ids, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Gets all by id partition pairs.
     /// </summary>
     /// <param name="pairs">pairs to process.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All By ID Partition Pairs.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Gets all by id name pairs.
     /// </summary>
     /// <param name="pairs">pairs to process.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All By ID Name Pairs.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Gets items.
@@ -78,9 +89,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get Items.</returns>
     [Pure]
-    ValueTask<List<T>> GetItems<T>(string query, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<T>> GetItems<T>(string query, double? delayMs = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Gets items.
@@ -88,9 +100,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="queryDefinition">Database query and parameters to execute.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get Items.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// The bottom method call for most GetItems() in ICosmosRepository
@@ -99,9 +113,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="queryDefinition">Database query and parameters to execute.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get Items.</returns>
     [Pure]
-    ValueTask<List<T>> GetItems<T>(QueryDefinition queryDefinition, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<T>> GetItems<T>(QueryDefinition queryDefinition, double? delayMs = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Retrieves a list of items with createdAt between the parameters (inclusive, careful). Non-ordered.
@@ -110,9 +126,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="endAt">End At for the get items between operation.</param>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get Items Between.</returns>
     [Pure]
-    ValueTask<List<TDocument>> GetItemsBetween(DateTimeOffset startAt, DateTimeOffset endAt, double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> GetItemsBetween(DateTimeOffset startAt, DateTimeOffset endAt, double? delayMs = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Gets ids.
@@ -131,9 +149,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All Ids.</returns>
     [Pure]
-    ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Before executing, adds an additional where clause to only gather ids from a given query (useful say during deletion)
@@ -150,9 +169,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     /// <param name="delayMs">Delay in milliseconds before the action runs.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the collection returned by get All Partition Keys.</returns>
     [Pure]
-    ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default);
+    ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Before executing, adds an additional where clause to only gather partitionKeys from a given query

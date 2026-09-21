@@ -1,3 +1,4 @@
+using Soenneker.Cosmos.Repository.Dtos;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,13 +18,14 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="mutation">Callback used by mutate item.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <param name="maxAttempts">Max Attempts for the mutate item operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The current or updated document, or <see langword="null"/> when the item does not exist.</returns>
     /// <remarks>
     /// The mutation may be invoked more than once and must only describe the intended document delta.
     /// It must not perform non-idempotent external side effects.
     /// </remarks>
     ValueTask<TDocument?> MutateItem(string id, Func<TDocument, bool> mutation, CancellationToken cancellationToken = default,
-        int maxAttempts = 5);
+        int maxAttempts = 5, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Reads an item with its ETag, applies an asynchronous mutation, and conditionally replaces it.
@@ -33,11 +35,12 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="mutation">Callback used by mutate item.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <param name="maxAttempts">Max Attempts for the mutate item operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The current or updated document, or <see langword="null"/> when the item does not exist.</returns>
     /// <remarks>
     /// The mutation may be invoked more than once and must only describe the intended document delta.
     /// It must not perform non-idempotent external side effects.
     /// </remarks>
     ValueTask<TDocument?> MutateItem(string id, Func<TDocument, ValueTask<bool>> mutation,
-        CancellationToken cancellationToken = default, int maxAttempts = 5);
+        CancellationToken cancellationToken = default, int maxAttempts = 5, CosmosReadOptions? readOptions = null);
 }

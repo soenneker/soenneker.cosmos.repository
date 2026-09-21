@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,10 +18,10 @@ namespace Soenneker.Cosmos.Repository;
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize,
-        string? continuationToken = null, CancellationToken cancellationToken = default)
+        string? continuationToken = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         // Build the query with paging and sorting
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken)
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken, readOptions)
             .NoSync();
 
         // OrderBy is required for paging
@@ -32,7 +33,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize,
-        string? continuationToken, CancellationToken cancellationToken = default)
+        string? continuationToken, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
@@ -41,10 +42,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 typeof(TDocument).Name, pageSize, continuationToken is not null, query);
         }
 
-        var requestOptions = new QueryRequestOptions
-        {
-            MaxItemCount = pageSize
-        };
+        QueryRequestOptions requestOptions = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? new QueryRequestOptions();
+        requestOptions.MaxItemCount = pageSize;
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -105,10 +104,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         query = query.WithNullSemantics();
 
-        return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, cancellationToken);
+        return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, cancellationToken, readOptions);
     }
 }

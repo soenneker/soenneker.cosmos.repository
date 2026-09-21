@@ -18,20 +18,26 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CancellationToken cancellationToken = default)
+    public ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
-        return GetItemWithETag(documentId, partitionKey, cancellationToken);
+        return GetItemWithETag(documentId, partitionKey, cancellationToken, readOptions);
     }
 
-    public async ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey,
-        CancellationToken cancellationToken = default)
+    public ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    {
+        return GetItemWithETagCore(documentId, new PartitionKey(partitionKey), (readOptions ?? DefaultReadOptions)?.ToItemRequestOptions(), cancellationToken);
+    }
+
+    private async ValueTask<CosmosItem<TDocument>?> GetItemWithETagCore(string documentId, PartitionKey partitionKey,
+        ItemRequestOptions? requestOptions, CancellationToken cancellationToken)
     {
         try
         {
             Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
-            ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, new PartitionKey(partitionKey),
-                    cancellationToken: cancellationToken)
+            ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(documentId, partitionKey,
+                    requestOptions: requestOptions, cancellationToken: cancellationToken)
                 .NoSync();
 
             return new CosmosItem<TDocument>(response.Resource, response.ETag);
@@ -42,51 +48,55 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public virtual ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default)
+    public virtual ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        return GetItem(documentId, partitionKey, cancellationToken);
+        return GetItem(documentId, partitionKey, cancellationToken, readOptions);
     }
 
-    public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
+    public async ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         var q = new QueryDefinition("SELECT TOP 1 * FROM c");
 
-        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
-        {
-            PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1,
-            EnableOptimisticDirectExecution = true
-        });
+        QueryRequestOptions requestOptions = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? new QueryRequestOptions();
+        requestOptions.PartitionKey = new PartitionKey(partitionKey);
+        requestOptions.MaxItemCount = 1;
+        requestOptions.EnableOptimisticDirectExecution = true;
+
+        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: requestOptions);
 
         return await ReadFirst(it, cancellationToken).NoSync();
     }
 
-    public async ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
+    public async ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
         var q = new QueryDefinition("SELECT TOP 1 * FROM c ORDER BY c.createdAt DESC");
 
-        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: new QueryRequestOptions
-        {
-            PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1,
-            EnableOptimisticDirectExecution = true
-        });
+        QueryRequestOptions requestOptions = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? new QueryRequestOptions();
+        requestOptions.PartitionKey = new PartitionKey(partitionKey);
+        requestOptions.MaxItemCount = 1;
+        requestOptions.EnableOptimisticDirectExecution = true;
+
+        using FeedIterator<TDocument> it = container.GetItemQueryIterator<TDocument>(q, requestOptions: requestOptions);
 
         return await ReadFirst(it, cancellationToken).NoSync();
     }
 
-    public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default)
+    public ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
-        return GetItem(idNamePair.Id, idNamePair.Id, cancellationToken);
+        return GetItem(idNamePair.Id, idNamePair.Id, cancellationToken, readOptions);
     }
 
-    public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default)
+    public async ValueTask<TDocument?> GetItem(string documentId, string partitionKey,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         try
         {
@@ -104,7 +114,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             ItemResponse<TDocument> response = await container.ReadItemAsync<TDocument>(
                 documentId,
                 new PartitionKey(partitionKey),
-                cancellationToken: cancellationToken).NoSync();
+                requestOptions: (readOptions ?? DefaultReadOptions)?.ToItemRequestOptions(), cancellationToken: cancellationToken).NoSync();
 
             return response.Resource;
         }
@@ -114,21 +124,28 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public virtual async ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default)
+    public virtual async ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(GetSingleItemQueryOptions(readOptions), cancellationToken).NoSync();
 
         query = query.OrderBy(static x => x.CreatedAt);
 
         return await GetItem(query, cancellationToken).NoSync();
     }
 
-    public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default)
+    public virtual async ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
-        IQueryable<TDocument> query = await BuildQueryable(CosmosRequestOptions.MaxItemCountOne, cancellationToken).NoSync();
+        IQueryable<TDocument> query = await BuildQueryable(GetSingleItemQueryOptions(readOptions), cancellationToken).NoSync();
 
         query = query.OrderByDescending(static x => x.CreatedAt);
 
         return await GetItem(query, cancellationToken).NoSync();
+    }
+
+    private QueryRequestOptions GetSingleItemQueryOptions(CosmosReadOptions? readOptions)
+    {
+        QueryRequestOptions options = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? CosmosRequestOptions.MaxItemCountOne;
+        options.MaxItemCount = 1;
+        return options;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -61,13 +62,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
+    public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument> docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken, readOptions).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -75,13 +77,14 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         } while (continuationToken != null);
     }
 
-    public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
+    public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument> docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken, readOptions).NoSync();
 
             continuationToken = newContinuationToken;
 

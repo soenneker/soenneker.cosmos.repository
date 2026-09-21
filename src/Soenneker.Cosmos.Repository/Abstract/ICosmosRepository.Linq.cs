@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -11,6 +12,10 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 /// <summary>
 /// Defines linq operations for Cosmos DB documents.
 /// </summary>
+/// <remarks>
+/// Methods that execute an existing IQueryable use the request options attached when the query was built.
+/// Configure consistency and session tokens through BuildQueryable's QueryRequestOptions or BuildPagedQueryable's readOptions.
+/// </remarks>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
@@ -38,9 +43,11 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="pageSize">Maximum number of items to request per page.</param>
     /// <param name="continuationToken">Token identifying the next page of query results.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
-    ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
+    ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Returns an empty query that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
@@ -50,12 +57,14 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="pageSize">Maximum number of items to request per page.</param>
     /// <param name="continuationToken">Token identifying the next page of query results.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
-    ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null, CancellationToken cancellationToken = default);
+    ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
-    /// Essentially wraps <see cref="GetItems{T}(string, double?, CancellationToken)"/> with .FirstOrDefault()
+    /// Essentially wraps <see cref="GetItems{T}(string, double?, CancellationToken, CosmosReadOptions?)"/> with .FirstOrDefault()
     /// </summary>
     /// <typeparam name="T">Type of value handled by the cosmos repository.</typeparam>
     /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
@@ -89,9 +98,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Counts cosmos Repository.
     /// </summary>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested value.</returns>
     [Pure]
-    ValueTask<int> Count(CancellationToken cancellationToken = default);
+    ValueTask<int> Count(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Counts cosmos Repository.
@@ -106,15 +116,17 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// Checks for cosmos Repository.
     /// </summary>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>true if retrieves any from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
-    ValueTask<bool> Any(CancellationToken cancellationToken = default);
+    ValueTask<bool> Any(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Returns the value produced by none.
     /// </summary>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>true if retrieves none from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
-    ValueTask<bool> None(CancellationToken cancellationToken = default);
+    ValueTask<bool> None(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 }

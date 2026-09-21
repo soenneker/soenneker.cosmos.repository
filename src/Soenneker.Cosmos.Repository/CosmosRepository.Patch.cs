@@ -25,8 +25,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null,
-        bool useQueue = false, CancellationToken cancellationToken = default)
+        bool useQueue = false, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return PatchItemsCore(documents, operations, delayMs, useQueue, cancellationToken);
     }
 
@@ -93,8 +94,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return PatchItemCore(id, operations, useQueue, cancellationToken);
     }
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.Container.Abstract;
 using Soenneker.Cosmos.Repository.Abstract;
 using Soenneker.Cosmos.Repository.Abstract.Utils;
+using Soenneker.Cosmos.Repository.Dtos;
 using Soenneker.Documents.Document;
 using Soenneker.Extensions.String;
 using Soenneker.Utils.BackgroundQueue.Abstract;
@@ -16,7 +17,6 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Cosmos.Repository;
 
-/// <inheritdoc cref="ICosmosRepository{TDocument}" />
 public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TDocument>, ICosmosRepositoryContext where TDocument : Document
 {
     private const int _documentIdBatchSize = 50;
@@ -35,6 +35,16 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
         _cosmosContainerUtil.Get(ContainerName, cancellationToken);
 
     public virtual bool AuditEnabled => true;
+
+    public virtual CosmosReadOptions? DefaultReadOptions => null;
+
+    public virtual CosmosWriteOptions? DefaultWriteOptions => null;
+
+    private void EnsureUnconditionalWriteAllowed(CosmosWriteOptions? writeOptions)
+    {
+        if (DefaultWriteOptions?.RequireETag == true || writeOptions?.RequireETag == true)
+            throw new InvalidOperationException("This operation requires an ETag. Use an IfMatch method or MutateItem.");
+    }
 
     public abstract string ContainerName { get; }
 

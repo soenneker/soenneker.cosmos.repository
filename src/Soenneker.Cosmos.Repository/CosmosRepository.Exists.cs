@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Soenneker.Cosmos.Linq;
 using Soenneker.Documents.Document;
@@ -14,20 +15,21 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default)
+    public ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        return Exists(documentId, partitionKey, cancellationToken);
+        return Exists(documentId, partitionKey, cancellationToken, readOptions);
     }
 
-    public async ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> Exists(string documentId, string partitionKey,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
         using ResponseMessage resp = await container.ReadItemStreamAsync(
-                                                        id: documentId, partitionKey: new PartitionKey(partitionKey), cancellationToken: cancellationToken)
+                                                        id: documentId, partitionKey: new PartitionKey(partitionKey), requestOptions: (readOptions ?? DefaultReadOptions)?.ToItemRequestOptions(), cancellationToken: cancellationToken)
                                                     .NoSync();
 
         if (resp.StatusCode == HttpStatusCode.NotFound)
@@ -60,19 +62,19 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return false;
     }
 
-    public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
         QueryDefinition q = new("SELECT VALUE 1 FROM c OFFSET 0 LIMIT 1");
 
-        using FeedIterator<int> it = container.GetItemQueryIterator<int>(q, requestOptions: new QueryRequestOptions
-        {
-            PartitionKey = new PartitionKey(partitionKey),
-            MaxItemCount = 1,
-            EnableOptimisticDirectExecution = true
-        });
+        QueryRequestOptions requestOptions = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? new QueryRequestOptions();
+        requestOptions.PartitionKey = new PartitionKey(partitionKey);
+        requestOptions.MaxItemCount = 1;
+        requestOptions.EnableOptimisticDirectExecution = true;
+
+        using FeedIterator<int> it = container.GetItemQueryIterator<int>(q, requestOptions: requestOptions);
 
         return await HasAnyResults(it, cancellationToken).NoSync();
     }

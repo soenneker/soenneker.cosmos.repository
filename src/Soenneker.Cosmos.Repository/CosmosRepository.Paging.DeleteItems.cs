@@ -1,3 +1,4 @@
+using Soenneker.Cosmos.Repository.Dtos;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Constants.Data;
@@ -18,8 +19,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     private readonly record struct IdOnlyProjection(string DocumentId, string PartitionKey);
 
     public virtual async ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         if (_log && Logger.IsEnabled(LogLevel.Warning))
         {
             Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs",
@@ -38,11 +40,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             if (_log && Logger.IsEnabled(LogLevel.Debug))
                 Logger.LogDebug("Number of rows to be deleted in page: {rows}", results.Count);
 
-            for (int i = 0; i < results.Count; i++)
+            for (var i = 0; i < results.Count; i++)
             {
                 IdOnlyProjection result = results[i];
 
-                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken).NoSync();
+                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken, writeOptions).NoSync();
 
                 if (delay.HasValue)
                     await Task.Delay(delay.Value, cancellationToken).NoSync();
@@ -56,8 +58,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual async ValueTask DeleteItemsPaged(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null,
-        bool useQueue = false, CancellationToken cancellationToken = default)
+        bool useQueue = false, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         if (_log && Logger.IsEnabled(LogLevel.Warning))
         {
             Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs",
@@ -71,11 +74,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             if (_log && Logger.IsEnabled(LogLevel.Debug))
                 Logger.LogDebug("Number of rows to be deleted in page: {rows}", results.Count);
 
-            for (int i = 0; i < results.Count; i++)
+            for (var i = 0; i < results.Count; i++)
             {
                 TDocument result = results[i];
 
-                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken).NoSync();
+                await DeleteItem(result.DocumentId!, result.PartitionKey!, useQueue, cancellationToken, writeOptions).NoSync();
 
                 if (delay.HasValue)
                     await Task.Delay(delay.Value, cancellationToken).NoSync();
@@ -89,8 +92,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual async ValueTask DeleteAllPagedParallel(int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxConcurrency, 1);
 
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
@@ -103,14 +107,15 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await executor.Execute(results, async (result, ct) =>
             {
-                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct).NoSync();
+                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct, writeOptions).NoSync();
             }, cancellationToken).NoSync();
         }, cancellationToken).NoSync();
     }
 
     public virtual async ValueTask DeleteItemsPagedParallel(QueryDefinition queryDefinition, int maxConcurrency,
-        int pageSize = DataConstants.DefaultCosmosPageSize, CancellationToken cancellationToken = default)
+        int pageSize = DataConstants.DefaultCosmosPageSize, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         ArgumentNullException.ThrowIfNull(queryDefinition);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxConcurrency, 1);
 
@@ -121,7 +126,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             await executor.Execute(results, async (result, ct) =>
             {
-                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct).NoSync();
+                await DeleteItemWithContainer(container, result.DocumentId!, result.PartitionKey!, useQueue: false, ct, writeOptions).NoSync();
             }, cancellationToken).NoSync();
         }, cancellationToken).NoSync();
     }

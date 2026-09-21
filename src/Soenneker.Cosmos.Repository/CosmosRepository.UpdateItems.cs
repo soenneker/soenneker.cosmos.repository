@@ -24,8 +24,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     // Avoids container lookup per item, thus not using UpdateItem
     public ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return UpdateItemsCore(documents, delayMs, useQueue, excludeResponse, cancellationToken);
     }
 
@@ -134,8 +135,9 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return UpdateItemsParallelCore(documents, maxConcurrency, excludeResponse, cancellationToken);
     }
 

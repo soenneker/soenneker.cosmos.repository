@@ -27,11 +27,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return DeleteItemIfMatch(GetRequiredId(item.Document), item.ETag, cancellationToken);
     }
 
-    public virtual ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default)
+    public virtual ValueTask DeleteItem(string entityId, bool useQueue = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         (string partitionKey, string documentId) = entityId.ToSplitId();
 
-        return DeleteItem(documentId, partitionKey, useQueue, cancellationToken);
+        return DeleteItem(documentId, partitionKey, useQueue, cancellationToken, writeOptions);
     }
 
     public virtual ValueTask DeleteItemIfMatch(string entityId, string expectedETag, CancellationToken cancellationToken = default)
@@ -41,49 +43,54 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return DeleteItemIfMatch(documentId, partitionKey, expectedETag, cancellationToken);
     }
 
-    public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteAll(double? delayMs = null, bool useQueue = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         Logger.LogWarning("-- COSMOS: {method} ({type}) w/ {delayMs}ms delay between docs", MethodUtil.Get(), typeof(TDocument).Name,
             delayMs.GetValueOrDefault());
 
         List<IdPartitionPair> ids = await GetAllIds(delayMs, cancellationToken)
             .NoSync();
 
-        await DeleteIds(ids, delayMs, useQueue, cancellationToken)
+        await DeleteIds(ids, delayMs, useQueue, cancellationToken, writeOptions)
             .NoSync();
 
         Logger.LogDebug("-- COSMOS: Finished {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
     }
 
     public async ValueTask DeleteItems(IQueryable<TDocument> query, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         if (_log && Logger.IsEnabled(LogLevel.Warning))
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         List<IdPartitionPair> ids = await GetIds(query, delayMs, cancellationToken)
             .NoSync();
 
-        await DeleteIds(ids, delayMs, useQueue, cancellationToken)
+        await DeleteIds(ids, delayMs, useQueue, cancellationToken, writeOptions)
             .NoSync();
     }
 
     public async ValueTask DeleteItemsParallel(IQueryable<TDocument> query, int maxConcurrency, double? delayMs = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         if (_log && Logger.IsEnabled(LogLevel.Warning))
             Logger.LogWarning("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);
 
         List<IdPartitionPair> ids = await GetIds(query, delayMs, cancellationToken)
             .NoSync();
 
-        await DeleteIdsParallel(ids, maxConcurrency, cancellationToken)
+        await DeleteIdsParallel(ids, maxConcurrency, cancellationToken, writeOptions)
             .NoSync();
     }
 
     public virtual ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return DeleteIdsCore(ids, null, delayMs, useQueue, cancellationToken);
     }
 
@@ -131,8 +138,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public virtual ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency, CancellationToken cancellationToken = default)
+    public virtual ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         return DeleteIdsParallelCore(ids, null, maxConcurrency, cancellationToken);
     }
 
@@ -181,10 +190,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     /// <param name="partitionKey">The partition key.</param>
     /// <param name="useQueue">Whether to enqueue the delete operation.</param>
     /// <param name="ct">The cancellation token.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public virtual async ValueTask DeleteItemWithContainer(Microsoft.Azure.Cosmos.Container container, string documentId, string partitionKey,
-        bool useQueue = false, CancellationToken ct = default)
+        bool useQueue = false, CancellationToken ct = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         await DeleteItemWithContainerCore(container, documentId, partitionKey, null, useQueue, ct).NoSync();
     }
 
@@ -245,11 +256,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 .NoSync();
     }
 
-    public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false, CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken).NoSync();
 
-        await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken).NoSync();
+        await DeleteItemWithContainer(container, documentId, partitionKey, useQueue, cancellationToken, writeOptions).NoSync();
     }
 
     public virtual async ValueTask DeleteItemIfMatch(string documentId, string partitionKey, string expectedETag,
@@ -285,8 +298,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         throw new KeyNotFoundException($"No expected ETag was supplied for document '{id}'.");
     }
 
-    public virtual async ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt, CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
 
@@ -294,7 +309,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                             .WithParameter("@s", startAt)
                             .WithParameter("@e", endAt);
 
-        using FeedIterator<IdPartitionPair> it = container.GetItemQueryIterator<IdPartitionPair>(q);
+        using FeedIterator<IdPartitionPair> it = container.GetItemQueryIterator<IdPartitionPair>(q, requestOptions: DefaultReadOptions?.ToQueryRequestOptions());
 
         var ids = new List<IdPartitionPair>(256);
 
@@ -310,7 +325,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             }
         }
 
-        await DeleteIdsBatched(ids, 100, cancellationToken)
+        await DeleteIdsBatched(ids, 100, cancellationToken, writeOptions)
             .NoSync();
     }
 
@@ -320,9 +335,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     /// <param name="ids">The document and partition-key pairs to delete.</param>
     /// <param name="batchSize">The maximum number of deletes in each batch.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public virtual async ValueTask DeleteIdsBatched(List<IdPartitionPair> ids, int batchSize = 100, CancellationToken cancellationToken = default)
+    public virtual async ValueTask DeleteIdsBatched(List<IdPartitionPair> ids, int batchSize = 100,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
     {
+        EnsureUnconditionalWriteAllowed(writeOptions);
         if (ids.Count == 0)
             return;
 
@@ -336,7 +354,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         var buckets = new Dictionary<string, List<string>>(Math.Min(ids.Count, 256), StringComparer.Ordinal);
 
-        for (int i = 0; i < ids.Count; i++)
+        for (var i = 0; i < ids.Count; i++)
         {
             IdPartitionPair pair = ids[i];
 
@@ -356,7 +374,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             PartitionKey pk = new(kvp.Key);
             List<string> bucket = kvp.Value;
 
-            for (int start = 0; start < bucket.Count; start += batchSize)
+            for (var start = 0; start < bucket.Count; start += batchSize)
             {
                 int count = Math.Min(batchSize, bucket.Count - start);
 

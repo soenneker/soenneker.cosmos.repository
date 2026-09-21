@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,9 +16,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     /// <param name="id">Identifier of the cosmos repository instance or registration to target.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the document exists; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default);
+    ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Checks whether the specified document exists in the given partition.
@@ -25,9 +27,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="documentId">Identifier of the target document.</param>
     /// <param name="partitionKey">Partition key used to route the database operation.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the document exists; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default);
+    ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Checks whether the query returns at least one document.
@@ -43,7 +46,8 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </summary>
     /// <param name="partitionKey">Partition key used to route the database operation.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the partition contains a document; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
+    ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 }

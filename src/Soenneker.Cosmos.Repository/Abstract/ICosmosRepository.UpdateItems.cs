@@ -18,8 +18,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="useQueue">Whether to enqueue the write for background execution instead of awaiting Redis directly.</param>
     /// <param name="excludeResponse">exclude Response returned by the upstream operation.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by update Items.</returns>
-    ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
 
     /// <summary>
     /// Updates every wrapped document only when its current ETag matches and returns each new ETag.
@@ -38,8 +40,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="maxConcurrency">Maximum number of operations allowed to run concurrently.</param>
     /// <param name="excludeResponse">exclude Response returned by the upstream operation.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by update Items Parallel.</returns>
-    ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false, CancellationToken cancellationToken = default);
+    ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
+        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
 
     /// <summary>
     /// Updates every wrapped document in parallel only when its current ETag matches and returns each new ETag.

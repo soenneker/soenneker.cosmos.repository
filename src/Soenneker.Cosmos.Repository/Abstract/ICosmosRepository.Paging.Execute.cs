@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Soenneker.Cosmos.Repository.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -43,8 +44,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="pageSize">Maximum number of items to request per page.</param>
     /// <param name="resultTask">Callback used by execute on get all paged.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task that completes when the execute on get all paged operation is complete.</returns>
-    ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
+    ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
 
     /// <summary>
     /// Executes on Get Items Paged.
@@ -53,7 +56,9 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="pageSize">Maximum number of items to request per page.</param>
     /// <param name="resultTask">Callback used by execute on get items paged.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task that completes when the execute on get items paged operation is complete.</returns>
-    ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default);
+    ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask,
+        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
     
 }
