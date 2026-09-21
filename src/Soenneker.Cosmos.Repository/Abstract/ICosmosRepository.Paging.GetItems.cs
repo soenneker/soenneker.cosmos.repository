@@ -24,7 +24,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A task whose result is the requested (List items, string continuation Token).</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a page of items using a query definition and continuation token.
@@ -40,7 +40,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// </remarks>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Be sure to pass a query that was built via <see cref="BuildPagedQueryable"/>
@@ -66,5 +66,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A task whose result is the requested (List items, string continuation Token).</returns>
     [Pure]
     ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 }

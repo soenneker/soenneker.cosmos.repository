@@ -19,7 +19,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the document exists; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<bool> Exists(string id, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks whether the specified document exists in the given partition.
@@ -30,7 +30,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the document exists; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> Exists(string documentId, string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<bool> Exists(string documentId, string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks whether the query returns at least one document.
@@ -49,5 +49,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns><see langword="true"/> when the partition contains a document; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<bool> ExistsByPartitionKey(string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 }

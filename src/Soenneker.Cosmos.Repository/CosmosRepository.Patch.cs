@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Documents.Document;
 using Soenneker.Cosmos.Repository.Dtos;
@@ -24,8 +24,8 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return PatchItemIfMatch(GetRequiredId(item.Document), operations, item.ETag, cancellationToken);
     }
 
-    public ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null,
-        bool useQueue = false, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
+    public ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false,
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default)
     {
         EnsureUnconditionalWriteAllowed(writeOptions);
         return PatchItemsCore(documents, operations, delayMs, useQueue, cancellationToken);
@@ -73,7 +73,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken, container)
+                await PatchItemCore(GetRequiredId(item), operations, useQueue, container, cancellationToken: cancellationToken)
                     .NoSync();
                 await DelayUtil.Delay(timespanDelay.Value, null, cancellationToken)
                                .NoSync();
@@ -85,7 +85,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await PatchItemCore(GetRequiredId(item), operations, useQueue, cancellationToken, container)
+                await PatchItemCore(GetRequiredId(item), operations, useQueue, container, cancellationToken: cancellationToken)
                     .NoSync();
             }
         }
@@ -94,10 +94,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default)
     {
         EnsureUnconditionalWriteAllowed(writeOptions);
-        return PatchItemCore(id, operations, useQueue, cancellationToken);
+        return PatchItemCore(id, operations, useQueue, cancellationToken: cancellationToken);
     }
 
     public async ValueTask<CosmosItem<TDocument>> PatchItemIfMatch(string id, List<PatchOperation> operations, string expectedETag,
@@ -109,7 +109,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     private async ValueTask<TDocument?> PatchItemCore(string id, List<PatchOperation> operations, bool useQueue,
-        CancellationToken cancellationToken, Microsoft.Azure.Cosmos.Container? resolvedContainer = null)
+        Microsoft.Azure.Cosmos.Container? resolvedContainer = null, CancellationToken cancellationToken = default)
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
             Logger.LogDebug("-- COSMOS: {method} ({type})", MethodUtil.Get(), typeof(TDocument).Name);

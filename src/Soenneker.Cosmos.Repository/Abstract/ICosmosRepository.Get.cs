@@ -18,7 +18,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested cosmos Item.</returns>
-    ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string id, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an item together with the ETag required for a subsequent conditional write.
@@ -29,7 +29,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested cosmos Item.</returns>
     ValueTask<CosmosItem<TDocument>?> GetItemWithETag(string documentId, string partitionKey,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets one item by full ID (partition key and document ID, or one value when they are the same).
@@ -39,7 +39,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The document, or <see langword="null"/> when Cosmos returns 404 Not Found. Other failures propagate.</returns>
     [Pure]
-    ValueTask<TDocument?> GetItem(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetItem(string id, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns an arbitrary first document from the specified partition.
@@ -49,7 +49,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The document, or <see langword="null"/> when the partition is empty.</returns>
     [Pure]
-    ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetItemByPartitionKey(string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves the most recent document associated with the specified partition key, if available.
@@ -60,7 +60,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A value task that represents the asynchronous operation. The result contains the latest document for the
     /// specified partition key, or null if no document exists.</returns>
     [Pure]
-    ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetLatestByPartitionKey(string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets item by id name pair.
@@ -70,7 +70,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the t Document returned by get Item By ID Name Pair.</returns>
     [Pure]
-    ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetItemByIdNamePair(IdNamePair idNamePair, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets one item by its document ID and partition key.
@@ -81,7 +81,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The document, or <see langword="null"/> when Cosmos returns 404 Not Found. Other failures propagate.</returns>
     [Pure]
-    ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetItem(string documentId, string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the first item ordered by creation time ascending.
@@ -90,7 +90,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The earliest-created item, or <see langword="null"/> when no item exists.</returns>
     [Pure]
-    ValueTask<TDocument?> GetFirst(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetFirst(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the first item ordered by creation time descending.
@@ -99,5 +99,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>The latest-created item, or <see langword="null"/> when no item exists.</returns>
     [Pure]
-    ValueTask<TDocument?> GetLast(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> GetLast(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 }

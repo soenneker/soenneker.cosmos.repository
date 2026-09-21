@@ -28,7 +28,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<TDocument> UpdateItem(TDocument item, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default)
     {
         EnsureUnconditionalWriteAllowed(writeOptions);
         return UpdateItemCore(GetRequiredId(item), item, useQueue, excludeResponse, cancellationToken);
@@ -42,7 +42,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<TDocument> UpdateItem(string id, TDocument item, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null)
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default)
     {
         EnsureUnconditionalWriteAllowed(writeOptions);
         return UpdateItemCore(id, item, useQueue, excludeResponse, cancellationToken);

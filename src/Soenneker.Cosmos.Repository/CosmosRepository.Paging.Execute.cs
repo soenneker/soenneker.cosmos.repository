@@ -15,7 +15,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 {
     public virtual ValueTask ExecuteOnGetItemsPaged(IQueryable<TDocument> query, Func<List<TDocument>, ValueTask> resultTask, CancellationToken cancellationToken = default)
     {
-        return ExecuteOnGetItemsPaged<TDocument>(query, resultTask, cancellationToken);
+        return ExecuteOnGetItemsPaged<TDocument>(query, resultTask, cancellationToken: cancellationToken);
     }
 
     public virtual async ValueTask ExecuteOnGetItemsPaged<T>(IQueryable<T> query, Func<List<T>, ValueTask> resultTask, CancellationToken cancellationToken = default)
@@ -63,13 +63,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public async ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument> docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, cancellationToken, readOptions).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetItemsPaged(queryDefinition, pageSize, continuationToken, readOptions, cancellationToken: cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 
@@ -78,13 +78,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual async ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         string? continuationToken = null;
 
         do
         {
-            (List<TDocument> docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, cancellationToken, readOptions).NoSync();
+            (List<TDocument> docs, string? newContinuationToken) = await GetAllPaged(pageSize, continuationToken, readOptions, cancellationToken: cancellationToken).NoSync();
 
             continuationToken = newContinuationToken;
 

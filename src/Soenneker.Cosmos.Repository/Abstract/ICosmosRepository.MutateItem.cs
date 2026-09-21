@@ -24,8 +24,8 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// The mutation may be invoked more than once and must only describe the intended document delta.
     /// It must not perform non-idempotent external side effects.
     /// </remarks>
-    ValueTask<TDocument?> MutateItem(string id, Func<TDocument, bool> mutation, CancellationToken cancellationToken = default,
-        int maxAttempts = 5, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> MutateItem(string id, Func<TDocument, bool> mutation, int maxAttempts = 5,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads an item with its ETag, applies an asynchronous mutation, and conditionally replaces it.
@@ -41,6 +41,6 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// The mutation may be invoked more than once and must only describe the intended document delta.
     /// It must not perform non-idempotent external side effects.
     /// </remarks>
-    ValueTask<TDocument?> MutateItem(string id, Func<TDocument, ValueTask<bool>> mutation,
-        CancellationToken cancellationToken = default, int maxAttempts = 5, CosmosReadOptions? readOptions = null);
+    ValueTask<TDocument?> MutateItem(string id, Func<TDocument, ValueTask<bool>> mutation, int maxAttempts = 5,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 }

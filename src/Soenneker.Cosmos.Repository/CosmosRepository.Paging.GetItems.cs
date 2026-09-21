@@ -17,23 +17,23 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize,
-        string? continuationToken = null, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         // Build the query with paging and sorting
-        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, cancellationToken, readOptions)
+        IQueryable<TDocument> query = await BuildPagedQueryable(pageSize, continuationToken, readOptions, cancellationToken: cancellationToken)
             .NoSync();
 
         // OrderBy is required for paging
         query = query.OrderByDescending(static c => c.CreatedAt);
 
         // Directly return the result from GetItemsPaged
-        return await GetItemsPaged(query, cancellationToken)
+        return await GetItemsPaged(query, cancellationToken: cancellationToken)
             .NoSync();
     }
 
-    public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize,
-        string? continuationToken, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public virtual async ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(QueryDefinition queryDefinition, int pageSize, string? continuationToken,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         if (_log && Logger.IsEnabled(LogLevel.Debug))
         {
@@ -104,10 +104,10 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual ValueTask<(List<TDocument> items, string? continuationToken)> GetItemsPaged(IQueryable<TDocument> query, int pageSize, string? continuation,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         query = query.WithNullSemantics();
 
-        return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, cancellationToken, readOptions);
+        return GetItemsPaged(query.ToQueryDefinition(), pageSize, continuation, readOptions, cancellationToken: cancellationToken);
     }
 }

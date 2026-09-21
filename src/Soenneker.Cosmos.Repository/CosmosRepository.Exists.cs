@@ -15,15 +15,15 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
-    public ValueTask<bool> Exists(string id, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public ValueTask<bool> Exists(string id, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         (string partitionKey, string documentId) = id.ToSplitId();
 
-        return Exists(documentId, partitionKey, cancellationToken, readOptions);
+        return Exists(documentId, partitionKey, readOptions, cancellationToken: cancellationToken);
     }
 
     public async ValueTask<bool> Exists(string documentId, string partitionKey,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -62,7 +62,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return false;
     }
 
-    public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public async ValueTask<bool> ExistsByPartitionKey(string partitionKey, CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();

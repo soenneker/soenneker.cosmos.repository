@@ -33,7 +33,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by patch Items.</returns>
     ValueTask<List<TDocument>> PatchItems(List<TDocument> documents, List<PatchOperation> operations, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Patches every wrapped document only when its current ETag matches and returns each new ETag.
@@ -56,7 +56,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the t Document returned by patch Item.</returns>
     ValueTask<TDocument?> PatchItem(string id, List<PatchOperation> operations, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Patches an item only when its current ETag matches <paramref name="expectedETag"/>.

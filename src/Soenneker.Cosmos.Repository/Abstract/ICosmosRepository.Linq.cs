@@ -14,28 +14,32 @@ namespace Soenneker.Cosmos.Repository.Abstract;
 /// </summary>
 /// <remarks>
 /// Methods that execute an existing IQueryable use the request options attached when the query was built.
-/// Configure consistency and session tokens through BuildQueryable's QueryRequestOptions or BuildPagedQueryable's readOptions.
+/// Configure consistency and session tokens through BuildQueryable's request options or the builders' readOptions.
 /// </remarks>
 public partial interface ICosmosRepository<TDocument> where TDocument : class
 {
     /// <summary>
     /// Builds queryable.
     /// </summary>
-    /// <param name="queryRequestOptions">query Request Options that defines the request to send.</param>
+    /// <param name="queryRequestOptions">Explicit SDK options. When supplied, these take precedence over readOptions and repository defaults.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults when SDK options are omitted. An explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
-    ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
+    ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Builds queryable.
     /// </summary>
     /// <typeparam name="T">Type of value handled by the cosmos repository.</typeparam>
-    /// <param name="queryRequestOptions">query Request Options that defines the request to send.</param>
+    /// <param name="queryRequestOptions">Explicit SDK options. When supplied, these take precedence over readOptions and repository defaults.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <param name="readOptions">Overrides repository read defaults when SDK options are omitted. An explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
-    ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default);
+    ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Builds paged queryable.
@@ -47,7 +51,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
     ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns an empty query that can utilize LINQ, specifying the Cosmos requestOptions. Does not actually query. <para/>
@@ -61,10 +65,10 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <returns>A task whose result is the requested queryable.</returns>
     [Pure]
     ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = DataConstants.DefaultCosmosPageSize, string? continuationToken = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Essentially wraps <see cref="GetItems{T}(string, double?, CancellationToken, CosmosReadOptions?)"/> with .FirstOrDefault()
+    /// Essentially wraps <see cref="GetItems{T}(string, double?, CosmosReadOptions?, CancellationToken)"/> with .FirstOrDefault()
     /// </summary>
     /// <typeparam name="T">Type of value handled by the cosmos repository.</typeparam>
     /// <param name="query">CSS media-query expression to evaluate against the current viewport.</param>
@@ -101,7 +105,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task whose result is the requested value.</returns>
     [Pure]
-    ValueTask<int> Count(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<int> Count(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Counts cosmos Repository.
@@ -119,7 +123,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>true if retrieves any from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
-    ValueTask<bool> Any(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<bool> Any(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns the value produced by none.
@@ -128,5 +132,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>true if retrieves none from the Cosmos Repository; otherwise, false.</returns>
     [Pure]
-    ValueTask<bool> None(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+    ValueTask<bool> None(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 }

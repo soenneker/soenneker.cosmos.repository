@@ -12,16 +12,16 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument>
 {
-    public ValueTask<TDocument?> MutateItem(string id, Func<TDocument, bool> mutation, CancellationToken cancellationToken = default,
-        int maxAttempts = 5, CosmosReadOptions? readOptions = null)
+    public ValueTask<TDocument?> MutateItem(string id, Func<TDocument, bool> mutation, int maxAttempts = 5,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(mutation);
 
-        return MutateItem(id, document => new ValueTask<bool>(mutation(document)), cancellationToken, maxAttempts, readOptions);
+        return MutateItem(id, document => new ValueTask<bool>(mutation(document)), maxAttempts, readOptions, cancellationToken: cancellationToken);
     }
 
-    public async ValueTask<TDocument?> MutateItem(string id, Func<TDocument, ValueTask<bool>> mutation,
-        CancellationToken cancellationToken = default, int maxAttempts = 5, CosmosReadOptions? readOptions = null)
+    public async ValueTask<TDocument?> MutateItem(string id, Func<TDocument, ValueTask<bool>> mutation, int maxAttempts = 5,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentNullException.ThrowIfNull(mutation);

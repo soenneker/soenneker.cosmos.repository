@@ -18,7 +18,7 @@ namespace Soenneker.Cosmos.Repository;
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     public virtual async ValueTask<List<TDocument>> GetAll(double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -32,7 +32,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public async ValueTask<List<TDocument>> GetAllByPartitionKey(string partitionKey, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -50,7 +50,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public async ValueTask<List<TDocument>> GetAllByDocumentIds(List<string> documentIds,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         int count = documentIds.Count;
         if (count == 0)
@@ -89,7 +89,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public async ValueTask<List<TDocument>> GetAllByIdPartitionPairs(List<IdPartitionPair> pairs,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         int count = pairs.Count;
         if (count == 0)
@@ -113,7 +113,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public async ValueTask<List<TDocument>> GetAllByIdNamePairs(List<IdNamePair> pairs,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         int count = pairs.Count;
 
@@ -135,25 +135,25 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public ValueTask<List<TDocument>> GetItems(string query, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return GetItems<TDocument>(query, delayMs, cancellationToken, readOptions);
+        return GetItems<TDocument>(query, delayMs, readOptions, cancellationToken: cancellationToken);
     }
 
     public ValueTask<List<T>> GetItems<T>(string query, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return GetItems<T>(new QueryDefinition(query), delayMs, cancellationToken, readOptions);
+        return GetItems<T>(new QueryDefinition(query), delayMs, readOptions, cancellationToken: cancellationToken);
     }
 
     public ValueTask<List<TDocument>> GetItems(QueryDefinition queryDefinition, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return GetItems<TDocument>(queryDefinition, delayMs, cancellationToken, readOptions);
+        return GetItems<TDocument>(queryDefinition, delayMs, readOptions, cancellationToken: cancellationToken);
     }
 
     public virtual async ValueTask<List<IdPartitionPair>> GetAllIds(double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         var qd = new QueryDefinition("SELECT VALUE { id: c.id, partitionKey: c.partitionKey } FROM c");
         return await GetIdsCore(qd, (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions(), delayMs, cancellationToken)
@@ -209,11 +209,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
             PartitionKey = d.PartitionKey!
         });
 
-        return GetItems(idQueryable, delayMs, cancellationToken);
+        return GetItems(idQueryable, delayMs, cancellationToken: cancellationToken);
     }
 
     public async ValueTask<List<string>> GetAllPartitionKeys(double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();
@@ -232,11 +232,11 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         IQueryable<string> idQueryable = query.Select(static d => d.PartitionKey!)
                                               .Distinct();
 
-        return GetItems(idQueryable, delayMs, cancellationToken);
+        return GetItems(idQueryable, delayMs, cancellationToken: cancellationToken);
     }
 
     public async ValueTask<List<T>> GetItems<T>(QueryDefinition queryDefinition, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         LogQuery<T>(queryDefinition, MethodUtil.Get());
 
@@ -277,7 +277,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
     }
 
     public virtual async ValueTask<List<TDocument>> GetItemsBetween(DateTimeOffset startAt, DateTimeOffset endAt, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         Microsoft.Azure.Cosmos.Container container = await Container(cancellationToken)
             .NoSync();

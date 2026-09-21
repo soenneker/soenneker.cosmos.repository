@@ -44,12 +44,12 @@ public partial class PerformanceRegressionTests
             .Returns(() => Task.FromResult(new ResponseMessage(HttpStatusCode.OK)));
         ICosmosRepository<TestDocument> repo = CreateRepository(container.Object);
 
-        (await repo.GetItem("pk:doc", cts.Token, options)).Should().BeSameAs(document);
-        (await repo.GetItem("doc", "pk", cts.Token, options)).Should().BeSameAs(document);
-        (await repo.GetItemWithETag("pk:doc", cts.Token, options))!.ETag.Should().Be("etag");
-        (await repo.GetItemWithETag("doc", "pk", cts.Token, options))!.Document.Should().BeSameAs(document);
-        (await repo.Exists("pk:doc", cts.Token, options)).Should().BeTrue();
-        (await repo.Exists("doc", "pk", cts.Token, options)).Should().BeTrue();
+        (await repo.GetItem("pk:doc", options, cancellationToken: cts.Token)).Should().BeSameAs(document);
+        (await repo.GetItem("doc", "pk", options, cancellationToken: cts.Token)).Should().BeSameAs(document);
+        (await repo.GetItemWithETag("pk:doc", options, cancellationToken: cts.Token))!.ETag.Should().Be("etag");
+        (await repo.GetItemWithETag("doc", "pk", options, cancellationToken: cts.Token))!.Document.Should().BeSameAs(document);
+        (await repo.Exists("pk:doc", options, cancellationToken: cts.Token)).Should().BeTrue();
+        (await repo.Exists("doc", "pk", options, cancellationToken: cts.Token)).Should().BeTrue();
 
         seen.Count.Should().Be(6);
         if (mode == 1)

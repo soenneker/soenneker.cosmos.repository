@@ -31,7 +31,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes when the item deletion is complete.</returns>
-    ValueTask DeleteItem(string entityId, bool useQueue = false, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+    ValueTask DeleteItem(string entityId, bool useQueue = false, CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes an item only when its current ETag matches <paramref name="expectedETag"/>.
@@ -53,7 +53,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItem(string documentId, string partitionKey, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes an item only when its current ETag matches <paramref name="expectedETag"/>.
@@ -75,7 +75,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <remarks>TODO: Perhaps want to turn on Bulk support https://devblogs.microsoft.com/cosmosdb/introducing-bulk-support-in-the-net-sdk/</remarks>
-    ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+    ValueTask DeleteAll(double? delayMs = null, bool useQueue = false, CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes items.
@@ -87,7 +87,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItems(IQueryable<TDocument> query, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes items parallel.
@@ -99,7 +99,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItemsParallel(IQueryable<TDocument> query, int maxConcurrency, double? delayMs = null,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes ids.
@@ -111,7 +111,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteIds(List<IdPartitionPair> ids, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes every item only when its current ETag matches the value keyed by its full ID.
@@ -133,7 +133,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteIdsParallel(List<IdPartitionPair> ids, int maxConcurrency,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes every item in parallel only when its current ETag matches the value keyed by its full ID.
@@ -155,5 +155,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteCreatedAtBetween(DateTimeOffset startAt, DateTimeOffset endAt,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 }

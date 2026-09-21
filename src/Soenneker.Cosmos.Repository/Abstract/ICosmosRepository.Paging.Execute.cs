@@ -47,7 +47,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task that completes when the execute on get all paged operation is complete.</returns>
     ValueTask ExecuteOnGetAllPaged(int pageSize, Func<List<TDocument>, ValueTask> resultTask,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes on Get Items Paged.
@@ -59,6 +59,6 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="readOptions">Overrides repository read defaults. Null inherits them; an explicit empty value restores SDK defaults.</param>
     /// <returns>A task that completes when the execute on get items paged operation is complete.</returns>
     ValueTask ExecuteOnGetItemsPaged(QueryDefinition queryDefinition, int pageSize, Func<List<TDocument>, ValueTask> resultTask,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null);
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default);
     
 }

@@ -100,8 +100,13 @@ public partial class PerformanceRegressionTests
         await repo.BuildPagedQueryable(25, readOptions: new CosmosReadOptions());
         await repo.GetIds(new QueryDefinition("SELECT * FROM c"));
         await repo.GetIds(new QueryDefinition("SELECT * FROM c"), explicitOptions);
+        var overrideOptions = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.Eventual, SessionToken = "0:42" };
+        await repo.BuildQueryable(readOptions: overrideOptions);
+        await repo.BuildQueryable<TestDocument>(readOptions: overrideOptions);
+        await repo.BuildQueryable(readOptions: new CosmosReadOptions());
+        await repo.BuildQueryable(explicitOptions, readOptions: overrideOptions);
 
-        seen.Count.Should().Be(6);
+        seen.Count.Should().Be(10);
         AssertQueryReadOptions(seen[0]!, defaults);
         seen[1].Should().BeSameAs(explicitOptions);
         AssertQueryReadOptions(seen[2]!, defaults);
@@ -110,6 +115,10 @@ public partial class PerformanceRegressionTests
         seen[3]!.MaxItemCount.Should().Be(25);
         AssertQueryReadOptions(seen[4]!, defaults);
         seen[5].Should().BeSameAs(explicitOptions);
+        AssertQueryReadOptions(seen[6]!, overrideOptions);
+        AssertQueryReadOptions(seen[7]!, overrideOptions);
+        seen[8].Should().BeNull();
+        seen[9].Should().BeSameAs(explicitOptions);
         explicitOptions.ReadConsistencyStrategy.Should().BeNull();
     }
 

@@ -52,7 +52,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>The updated document, or the supplied document when the response body is excluded or the operation is queued.</returns>
     ValueTask<TDocument> UpdateItem(TDocument document, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an item with the specified full identifier unconditionally.
@@ -65,5 +65,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>The updated document, or the supplied document when the response body is excluded or the operation is queued.</returns>
     ValueTask<TDocument> UpdateItem(string id, TDocument document, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 }

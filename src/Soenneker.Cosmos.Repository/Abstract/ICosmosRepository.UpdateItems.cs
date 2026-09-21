@@ -21,7 +21,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by update Items.</returns>
     ValueTask<List<TDocument>> UpdateItems(List<TDocument> documents, double? delayMs = null, bool useQueue = false, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates every wrapped document only when its current ETag matches and returns each new ETag.
@@ -43,7 +43,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task whose result is the collection returned by update Items Parallel.</returns>
     ValueTask<List<TDocument>> UpdateItemsParallel(List<TDocument> documents, int maxConcurrency, bool excludeResponse = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates every wrapped document in parallel only when its current ETag matches and returns each new ETag.

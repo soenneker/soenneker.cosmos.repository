@@ -22,14 +22,16 @@ namespace Soenneker.Cosmos.Repository;
 public abstract partial class CosmosRepository<TDocument> where TDocument : Document
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default)
+    public ValueTask<IQueryable<TDocument>> BuildQueryable(QueryRequestOptions? queryRequestOptions = null,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return BuildQueryable<TDocument>(queryRequestOptions, cancellationToken);
+        return BuildQueryable<TDocument>(queryRequestOptions, readOptions, cancellationToken: cancellationToken);
     }
 
-    public ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null, CancellationToken cancellationToken = default)
+    public ValueTask<IQueryable<T>> BuildQueryable<T>(QueryRequestOptions? queryRequestOptions = null,
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return BuildQueryableCore<T>(queryRequestOptions ?? DefaultReadOptions?.ToQueryRequestOptions(), cancellationToken);
+        return BuildQueryableCore<T>(queryRequestOptions ?? (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions(), cancellationToken);
     }
 
     private async ValueTask<IQueryable<T>> BuildQueryableCore<T>(QueryRequestOptions? queryRequestOptions, CancellationToken cancellationToken)
@@ -41,13 +43,13 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<IQueryable<TDocument>> BuildPagedQueryable(int pageSize = 500, string? continuationToken = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return BuildPagedQueryable<TDocument>(pageSize, continuationToken, cancellationToken, readOptions);
+        return BuildPagedQueryable<TDocument>(pageSize, continuationToken, readOptions, cancellationToken: cancellationToken);
     }
 
     public ValueTask<IQueryable<T>> BuildPagedQueryable<T>(int pageSize = 500, string? continuationToken = null,
-        CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+        CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         QueryRequestOptions requestOptions = (readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions() ?? new QueryRequestOptions();
         requestOptions.MaxItemCount = pageSize;
@@ -63,12 +65,12 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         }
     }
 
-    public async ValueTask<int> Count(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public async ValueTask<int> Count(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryableCore<TDocument>((readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions(), cancellationToken)
             .NoSync();
 
-        return await Count(query, cancellationToken)
+        return await Count(query, cancellationToken: cancellationToken)
             .NoSync();
     }
 
@@ -82,18 +84,18 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         return response.Resource;
     }
 
-    public async ValueTask<bool> Any(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public async ValueTask<bool> Any(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
         IQueryable<TDocument> query = await BuildQueryableCore<TDocument>((readOptions ?? DefaultReadOptions)?.ToQueryRequestOptions(), cancellationToken)
             .NoSync();
 
-        return await Exists(query, cancellationToken)
+        return await Exists(query, cancellationToken: cancellationToken)
             .NoSync();
     }
 
-    public async ValueTask<bool> None(CancellationToken cancellationToken = default, CosmosReadOptions? readOptions = null)
+    public async ValueTask<bool> None(CosmosReadOptions? readOptions = null, CancellationToken cancellationToken = default)
     {
-        return !await Any(cancellationToken, readOptions)
+        return !await Any(readOptions, cancellationToken: cancellationToken)
             .NoSync();
     }
 

@@ -21,7 +21,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteAllPaged(int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes all items page-by-page with bounded parallelism.
@@ -32,7 +32,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteAllPagedParallel(int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes items paged.
@@ -45,7 +45,7 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItemsPaged(QueryDefinition queryDefinition, int pageSize = DataConstants.DefaultCosmosPageSize, double? delayMs = null, bool useQueue = false,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the queried items page-by-page with bounded parallelism.
@@ -57,5 +57,5 @@ public partial interface ICosmosRepository<TDocument> where TDocument : class
     /// <param name="writeOptions">Can require ETags for this call. Null, empty, or false cannot disable the repository ETag requirement.</param>
     /// <returns>A task that completes after the targeted files have been deleted.</returns>
     ValueTask DeleteItemsPagedParallel(QueryDefinition queryDefinition, int maxConcurrency, int pageSize = DataConstants.DefaultCosmosPageSize,
-        CancellationToken cancellationToken = default, CosmosWriteOptions? writeOptions = null);
+        CosmosWriteOptions? writeOptions = null, CancellationToken cancellationToken = default);
 }
