@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System;
 using Microsoft.Azure.Cosmos;
@@ -75,7 +75,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            byte[] itemJson = JsonUtil.SerializeToUtf8Bytes(item, JsonOptionType.Web);
+            byte[] itemJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, item.GetType(), _jsonContext);
 
             await _backgroundQueue.QueueValueTask(
                                       (Container: container, DocumentId: documentId, PartitionKey: pk, Json: itemJson, Options: options,

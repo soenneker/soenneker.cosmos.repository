@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
@@ -52,7 +52,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             // Snapshot everything we need up-front (no capturing document in the queued work item)
             string pk = partitionKeyValue;
-            byte[] json = JsonUtil.SerializeToUtf8Bytes(document, JsonOptionType.Web);
+            byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(document, document.GetType(), _jsonContext);
             var partitionKey = new PartitionKey(pk);
             bool auditEnabled = AuditEnabled;
 

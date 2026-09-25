@@ -1,4 +1,4 @@
-﻿namespace Soenneker.Cosmos.Repository.Abstract;
+namespace Soenneker.Cosmos.Repository.Abstract;
 
 /// <summary>
 /// Defines the core repository contract for a Cosmos DB document type.
@@ -34,6 +34,7 @@ public partial interface ICosmosRepository<TDocument> : ICosmosRepository where 
 /// <summary>
 /// Provides non-generic access to Cosmos repository operations.
 /// </summary>
+/// <remarks>Register a source-generated JsonSerializerContext covering application payloads. JSON contracts are never discovered through reflection.</remarks>
 public interface ICosmosRepository
 {
 }

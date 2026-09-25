@@ -198,7 +198,7 @@ public partial class PerformanceRegressionTests
 
     public sealed class TestDocument : Document { public bool Updated { get; set; } }
     private sealed class TestRepository(ICosmosContainerUtil util, CosmosReadOptions? readOptions = null,
-        CosmosWriteOptions? writeOptions = null) : CosmosRepository<TestDocument>(util,
+        CosmosWriteOptions? writeOptions = null) : CosmosRepository<TestDocument>(TestJsonContext.Default, util,
         new ConfigurationBuilder().Build(), NullLogger<CosmosRepository<TestDocument>>.Instance,
         Mock.Of<IUserContext>(), Mock.Of<IBackgroundQueue>(), Mock.Of<IMemoryStreamUtil>())
     {
