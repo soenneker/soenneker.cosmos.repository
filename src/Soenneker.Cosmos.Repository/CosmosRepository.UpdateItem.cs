@@ -7,11 +7,10 @@ using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Cosmos.Repository.Dtos;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
-using Soenneker.Enums.JsonOptions;
+using Soenneker.Json.OptionsCollection;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
-using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System.Threading;
 using System.Threading.Tasks;
@@ -75,7 +74,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            byte[] itemJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, item.GetType(), _jsonContext);
+            byte[] itemJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(TDocument)));
 
             await _backgroundQueue.QueueValueTask(
                                       (Container: container, DocumentId: documentId, PartitionKey: pk, Json: itemJson, Options: options,

@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -20,9 +19,6 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TDocument>, ICosmosRepositoryContext where TDocument : Document
 {
-    private readonly JsonSerializerContext _jsonContext;
-
-
     private const int _documentIdBatchSize = 50;
 
     private readonly ICosmosContainerUtil _cosmosContainerUtil;
@@ -60,10 +56,9 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     private readonly bool _log;
     private readonly bool _auditLog;
 
-    protected CosmosRepository(JsonSerializerContext jsonContext, ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
+    protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
         IUserContext userContext, IBackgroundQueue backgroundQueue, IMemoryStreamUtil memoryStreamUtil)
     {
-        _jsonContext = jsonContext ?? throw new System.ArgumentNullException(nameof(jsonContext));
         _cosmosContainerUtil = cosmosContainerUtil;
         Logger = logger;
         _userContext = userContext;

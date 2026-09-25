@@ -34,7 +34,7 @@ public partial interface ICosmosRepository<TDocument> : ICosmosRepository where 
 /// <summary>
 /// Provides non-generic access to Cosmos repository operations.
 /// </summary>
-/// <remarks>Register a source-generated JsonSerializerContext covering application payloads. JSON contracts are never discovered through reflection.</remarks>
+/// <remarks>Queued writes and audit records use the same shared web JSON options as the Cosmos serializer.</remarks>
 public interface ICosmosRepository
 {
 }

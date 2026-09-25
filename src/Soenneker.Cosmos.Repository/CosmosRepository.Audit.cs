@@ -4,11 +4,10 @@ using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Audit;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
-using Soenneker.Enums.JsonOptions;
+using Soenneker.Json.OptionsCollection;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
-using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
 using System.IO;
@@ -86,7 +85,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 eventType, entityId);
         }
 
-        byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(auditItem, auditItem.GetType(), _jsonContext);
+        byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(auditItem, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(AuditDocument)));
         await QueueAuditItem(json, auditItem.PartitionKey!, cancellationToken).NoSync();
     }
 

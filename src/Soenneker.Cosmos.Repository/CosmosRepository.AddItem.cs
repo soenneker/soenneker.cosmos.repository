@@ -3,11 +3,10 @@ using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.RequestOptions;
 using Soenneker.Documents.Document;
 using Soenneker.Enums.CrudEventTypes;
-using Soenneker.Enums.JsonOptions;
+using Soenneker.Json.OptionsCollection;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
-using Soenneker.Utils.Json;
 using Soenneker.Utils.Method;
 using System;
 using System.IO;
@@ -52,7 +51,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             // Snapshot everything we need up-front (no capturing document in the queued work item)
             string pk = partitionKeyValue;
-            byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(document, document.GetType(), _jsonContext);
+            byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(document, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(TDocument)));
             var partitionKey = new PartitionKey(pk);
             bool auditEnabled = AuditEnabled;
 
