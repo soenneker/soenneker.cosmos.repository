@@ -46,12 +46,12 @@
     <ItemGroup>
         <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="4.0.348" />
         <PackageReference Include="Soenneker.Constants.Data" Version="4.0.648" />
-        <PackageReference Include="Soenneker.Cosmos.Container" Version="4.0.2569" />
-        <PackageReference Include="Soenneker.Cosmos.Linq" Version="4.0.8" />
-        <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="4.0.182" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="4.0.2611" />
-        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="4.0.730" />
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="4.0.732" />
+        <PackageReference Include="Soenneker.Cosmos.Container" Version="4.0.2571" />
+        <PackageReference Include="Soenneker.Cosmos.Linq" Version="4.0.11" />
+        <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="4.0.185" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="4.0.2612" />
+        <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="4.0.731" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="4.0.733" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2515" />
         <PackageReference Include="Soenneker.Utils.Json" Version="4.0.2731" />
         <PackageReference Include="Soenneker.Utils.Method" Version="4.0.464" />
