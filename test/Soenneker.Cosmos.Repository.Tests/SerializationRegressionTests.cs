@@ -19,7 +19,7 @@ public partial class PerformanceRegressionTests
     [Arguments("add")]
     [Arguments("update")]
     [Arguments("batch")]
-    public async Task QueuedWritesUseCosmosJsonOptionsAndSnapshotDocuments(string operation)
+    public async ValueTask QueuedWritesUseCosmosJsonOptionsAndSnapshotDocuments(string operation)
     {
         var queue = new Mock<IBackgroundQueue>();
         var util = new Mock<ICosmosContainerUtil>();
@@ -44,7 +44,7 @@ public partial class PerformanceRegressionTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task AuditSerializationSupportsApplicationObjectsAndJsonPayloads(bool useJson)
+    public async ValueTask AuditSerializationSupportsApplicationObjectsAndJsonPayloads(bool useJson)
     {
         var queue = new Mock<IBackgroundQueue>();
         var util = new Mock<ICosmosContainerUtil>();

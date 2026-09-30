@@ -19,7 +19,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task RepositoryReadDefaultsCanBeOverriddenOrCleared(int mode)
+    public async ValueTask RepositoryReadDefaultsCanBeOverriddenOrCleared(int mode)
     {
         var defaults = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.LatestCommitted, SessionToken = "0:42" };
         CosmosReadOptions? methodOptions = mode switch
@@ -82,7 +82,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task QueryBuildersAndExplicitSdkOptionsRespectRepositoryPrecedence()
+    public async ValueTask QueryBuildersAndExplicitSdkOptionsRespectRepositoryPrecedence()
     {
         var defaults = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.LatestCommitted };
         var seen = new List<QueryRequestOptions?>();
@@ -128,7 +128,7 @@ public partial class PerformanceRegressionTests
     [Arguments(2)]
     [Arguments(3)]
     [Arguments(4)]
-    public async Task RequireETagBlocksEveryUnconditionalWriteBeforeIo(int mode)
+    public async ValueTask RequireETagBlocksEveryUnconditionalWriteBeforeIo(int mode)
     {
         var required = new CosmosWriteOptions { RequireETag = true };
         CosmosWriteOptions? methodOptions = mode switch
@@ -178,7 +178,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task UnconditionalWritesRemainAllowedWhenNeitherLevelRequiresETags()
+    public async ValueTask UnconditionalWritesRemainAllowedWhenNeitherLevelRequiresETags()
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         var document = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
@@ -210,7 +210,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task RequiredETagsAllowConditionalWritesAndCreatesAndPropagateConflicts()
+    public async ValueTask RequiredETagsAllowConditionalWritesAndCreatesAndPropagateConflicts()
     {
         var document = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();

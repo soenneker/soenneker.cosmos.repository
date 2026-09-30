@@ -23,7 +23,7 @@ namespace Soenneker.Cosmos.Repository.Tests;
 public partial class PerformanceRegressionTests
 {
     [Test]
-    public async Task ParallelAddsProcessEveryDocumentOnce()
+    public async ValueTask ParallelAddsProcessEveryDocumentOnce()
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         var seen = new int[32];
@@ -43,7 +43,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task EmptyBatchesDoNotResolveAContainer()
+    public async ValueTask EmptyBatchesDoNotResolveAContainer()
     {
         var util = new Mock<ICosmosContainerUtil>(MockBehavior.Strict);
         var repo = new TestRepository(util.Object);
@@ -61,7 +61,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task PatchBatchResolvesContainerOnce()
+    public async ValueTask PatchBatchResolvesContainerOnce()
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         container.Setup(c => c.PatchItemAsync<TestDocument>(It.IsAny<string>(), It.IsAny<PartitionKey>(),
@@ -79,7 +79,7 @@ public partial class PerformanceRegressionTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task SingleItemReadsSkipEmptyPages(bool latest)
+    public async ValueTask SingleItemReadsSkipEmptyPages(bool latest)
     {
         var expected = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
         var iterator = new TestIterator<TestDocument>([[], [], [expected]]);
@@ -94,7 +94,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task ExistsSkipsEmptyPagesAndStopsAtFirstResult()
+    public async ValueTask ExistsSkipsEmptyPagesAndStopsAtFirstResult()
     {
         var iterator = new TestIterator<int>([[], [1], [2]]);
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
@@ -106,7 +106,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task PagedLinqRewritesCallerNullFiltersBeforeCreatingQueryDefinition()
+    public async ValueTask PagedLinqRewritesCallerNullFiltersBeforeCreatingQueryDefinition()
     {
         using var client = new CosmosClient("https://localhost:8081", Convert.ToBase64String(new byte[64]));
         IQueryable<TestDocument> query = client.GetContainer("test", "test").GetItemLinqQueryable<TestDocument>();
@@ -140,7 +140,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task ReadManyUsesIdAsPartitionAndReusesResponseList()
+    public async ValueTask ReadManyUsesIdAsPartitionAndReusesResponseList()
     {
         var documents = new List<TestDocument> { new() { DocumentId = "a", PartitionKey = "a" } };
         var response = new TestResponse<TestDocument>(documents);
@@ -157,7 +157,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task ParallelUpdatesKeepIndicesAndBoundConcurrency()
+    public async ValueTask ParallelUpdatesKeepIndicesAndBoundConcurrency()
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         int active = 0, peak = 0;

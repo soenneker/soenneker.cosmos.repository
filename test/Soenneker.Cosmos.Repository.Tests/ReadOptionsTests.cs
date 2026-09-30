@@ -26,7 +26,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task PointReadsForwardOptionalConsistencyAndCancellation(int mode)
+    public async ValueTask PointReadsForwardOptionalConsistencyAndCancellation(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         using var cts = new CancellationTokenSource();
@@ -71,7 +71,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task QueryReadsForwardOptionsAcrossWrappersAndIdBatches(int mode)
+    public async ValueTask QueryReadsForwardOptionsAcrossWrappersAndIdBatches(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions?>();
@@ -107,7 +107,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task PartitionReadsRetainRoutingAndSingleItemSettings(int mode)
+    public async ValueTask PartitionReadsRetainRoutingAndSingleItemSettings(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions?>();
@@ -139,7 +139,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task ReadManyForwardsOptionalReadSettings(int mode)
+    public async ValueTask ReadManyForwardsOptionalReadSettings(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<ReadManyRequestOptions?>();
@@ -171,7 +171,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task PagedExecutionCarriesReadOptionsToEveryPage(int mode)
+    public async ValueTask PagedExecutionCarriesReadOptionsToEveryPage(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions>();
@@ -213,7 +213,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async Task PagedLinqBuilderPreservesReadOptionsAndPaging(int mode)
+    public async ValueTask PagedLinqBuilderPreservesReadOptionsAndPaging(int mode)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions>();
@@ -235,7 +235,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async Task MutationRetriesKeepReadOptionsAndETagProtection()
+    public async ValueTask MutationRetriesKeepReadOptionsAndETagProtection()
     {
         CosmosReadOptions options = ReadOptions(1)!.Value;
         var readRequests = new List<ItemRequestOptions>();

@@ -11,7 +11,7 @@ namespace Soenneker.Cosmos.Repository.Tests;
 public class PagingExecuteTests
 {
     [Test]
-    public async Task ExecuteOnFeedIteratorProcessesEveryPageOnce(CancellationToken cancellationToken)
+    public async ValueTask ExecuteOnFeedIteratorProcessesEveryPageOnce(CancellationToken cancellationToken)
     {
         var iterator = new TestFeedIterator<int>([[1, 2], [3], [4, 5]]);
         var processedPages = new List<List<int>>();
