@@ -74,7 +74,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
         if (useQueue)
         {
-            byte[] itemJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(TDocument)));
+            byte[] itemJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, _jsonOptions.GetTypeInfo(typeof(TDocument)));
 
             await _backgroundQueue.QueueValueTask(
                                       (Container: container, DocumentId: documentId, PartitionKey: pk, Json: itemJson, Options: options,

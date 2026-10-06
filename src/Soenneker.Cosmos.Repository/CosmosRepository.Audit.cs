@@ -85,7 +85,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
                 eventType, entityId);
         }
 
-        byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(auditItem, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(AuditDocument)));
+        byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(auditItem, _jsonOptions.GetTypeInfo(typeof(AuditDocument)));
         await QueueAuditItem(json, auditItem.PartitionKey!, cancellationToken).NoSync();
     }
 

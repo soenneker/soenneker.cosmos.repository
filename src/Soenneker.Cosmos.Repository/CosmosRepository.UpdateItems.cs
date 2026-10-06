@@ -85,7 +85,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
 
             if (useQueue)
             {
-                byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(TDocument)));
+                byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(item, _jsonOptions.GetTypeInfo(typeof(TDocument)));
                 var pk = new PartitionKey(partitionKey);
 
                 // Snapshot AuditEnabled once if you want; or evaluate at execution time.

@@ -51,7 +51,7 @@ public abstract partial class CosmosRepository<TDocument> where TDocument : Docu
         {
             // Snapshot everything we need up-front (no capturing document in the queued work item)
             string pk = partitionKeyValue;
-            byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(document, JsonOptionsCollection.WebOptions.GetTypeInfo(typeof(TDocument)));
+            byte[] json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(document, _jsonOptions.GetTypeInfo(typeof(TDocument)));
             var partitionKey = new PartitionKey(pk);
             bool auditEnabled = AuditEnabled;
 

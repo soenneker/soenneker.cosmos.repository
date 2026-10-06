@@ -1,3 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Soenneker.Json.OptionsCollection;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -19,6 +23,8 @@ namespace Soenneker.Cosmos.Repository;
 
 public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TDocument>, ICosmosRepositoryContext where TDocument : Document
 {
+    private readonly JsonSerializerOptions _jsonOptions;
+
     private const int _documentIdBatchSize = 50;
 
     private readonly ICosmosContainerUtil _cosmosContainerUtil;
@@ -56,9 +62,24 @@ public abstract partial class CosmosRepository<TDocument> : ICosmosRepository<TD
     private readonly bool _log;
     private readonly bool _auditLog;
 
+    [RequiresUnreferencedCode("The legacy serializer uses reflection. Supply a generated JsonSerializerContext instead.")]
+    [RequiresDynamicCode("The legacy serializer may require runtime code generation. Supply a generated JsonSerializerContext instead.")]
     protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
         IUserContext userContext, IBackgroundQueue backgroundQueue, IMemoryStreamUtil memoryStreamUtil)
+        : this(cosmosContainerUtil, config, logger, userContext, backgroundQueue, memoryStreamUtil, JsonOptionsCollection.WebOptions)
     {
+    }
+
+    protected CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
+        IUserContext userContext, IBackgroundQueue backgroundQueue, IMemoryStreamUtil memoryStreamUtil, JsonSerializerContext jsonContext)
+        : this(cosmosContainerUtil, config, logger, userContext, backgroundQueue, memoryStreamUtil, (jsonContext ?? throw new ArgumentNullException(nameof(jsonContext))).Options)
+    {
+    }
+
+    private CosmosRepository(ICosmosContainerUtil cosmosContainerUtil, IConfiguration config, ILogger<CosmosRepository<TDocument>> logger,
+        IUserContext userContext, IBackgroundQueue backgroundQueue, IMemoryStreamUtil memoryStreamUtil, JsonSerializerOptions jsonOptions)
+    {
+        _jsonOptions = jsonOptions;
         _cosmosContainerUtil = cosmosContainerUtil;
         Logger = logger;
         _userContext = userContext;
