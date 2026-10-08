@@ -19,7 +19,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask RepositoryReadDefaultsCanBeOverriddenOrCleared(int mode)
+    public async ValueTask RepositoryReadDefaultsCanBeOverriddenOrCleared(int mode, CancellationToken cancellationToken)
     {
         var defaults = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.LatestCommitted, SessionToken = "0:42" };
         CosmosReadOptions? methodOptions = mode switch
@@ -47,14 +47,14 @@ public partial class PerformanceRegressionTests
             .ReturnsAsync(new TestResponse<TestDocument>([]));
         var repo = CreateRepository(container.Object, defaults, new CosmosWriteOptions { RequireETag = true });
 
-        await repo.GetItem("pk:doc", readOptions: methodOptions);
-        await repo.GetItemWithETag("pk:doc", readOptions: methodOptions);
-        await repo.MutateItem("pk:doc", _ => false, readOptions: methodOptions);
-        await repo.GetAll(readOptions: methodOptions);
-        await repo.GetAllIds(readOptions: methodOptions);
-        await repo.GetItemsPaged(new QueryDefinition("SELECT * FROM c"), 25, null, readOptions: methodOptions);
-        await repo.GetAllByPartitionKey("pk", readOptions: methodOptions);
-        await repo.GetAllByIdPartitionPairs([new() { Id = "doc", PartitionKey = "pk" }], readOptions: methodOptions);
+        await repo.GetItem("pk:doc", readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetItemWithETag("pk:doc", readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.MutateItem("pk:doc", _ => false, readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetAll(readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetAllIds(readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetItemsPaged(new QueryDefinition("SELECT * FROM c"), 25, null, readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetAllByPartitionKey("pk", readOptions: methodOptions, cancellationToken: cancellationToken);
+        await repo.GetAllByIdPartitionPairs([new() { Id = "doc", PartitionKey = "pk" }], readOptions: methodOptions, cancellationToken: cancellationToken);
 
         items.Count.Should().Be(3);
         queries.Count.Should().Be(4);
@@ -82,7 +82,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async ValueTask QueryBuildersAndExplicitSdkOptionsRespectRepositoryPrecedence()
+    public async ValueTask QueryBuildersAndExplicitSdkOptionsRespectRepositoryPrecedence(CancellationToken cancellationToken)
     {
         var defaults = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.LatestCommitted };
         var seen = new List<QueryRequestOptions?>();
@@ -94,17 +94,17 @@ public partial class PerformanceRegressionTests
         var repo = CreateRepository(container.Object, defaults);
         var explicitOptions = new QueryRequestOptions { MaxItemCount = 17, PartitionKey = new PartitionKey("pk") };
 
-        await repo.BuildQueryable();
-        await repo.BuildQueryable(explicitOptions);
-        await repo.BuildPagedQueryable(25);
-        await repo.BuildPagedQueryable(25, readOptions: new CosmosReadOptions());
-        await repo.GetIds(new QueryDefinition("SELECT * FROM c"));
-        await repo.GetIds(new QueryDefinition("SELECT * FROM c"), explicitOptions);
+        await repo.BuildQueryable(cancellationToken: cancellationToken);
+        await repo.BuildQueryable(explicitOptions, cancellationToken: cancellationToken);
+        await repo.BuildPagedQueryable(25, cancellationToken: cancellationToken);
+        await repo.BuildPagedQueryable(25, readOptions: new CosmosReadOptions(), cancellationToken: cancellationToken);
+        await repo.GetIds(new QueryDefinition("SELECT * FROM c"), cancellationToken: cancellationToken);
+        await repo.GetIds(new QueryDefinition("SELECT * FROM c"), explicitOptions, cancellationToken: cancellationToken);
         var overrideOptions = new CosmosReadOptions { ReadConsistencyStrategy = ReadConsistencyStrategy.Eventual, SessionToken = "0:42" };
-        await repo.BuildQueryable(readOptions: overrideOptions);
-        await repo.BuildQueryable<TestDocument>(readOptions: overrideOptions);
-        await repo.BuildQueryable(readOptions: new CosmosReadOptions());
-        await repo.BuildQueryable(explicitOptions, readOptions: overrideOptions);
+        await repo.BuildQueryable(readOptions: overrideOptions, cancellationToken: cancellationToken);
+        await repo.BuildQueryable<TestDocument>(readOptions: overrideOptions, cancellationToken: cancellationToken);
+        await repo.BuildQueryable(readOptions: new CosmosReadOptions(), cancellationToken: cancellationToken);
+        await repo.BuildQueryable(explicitOptions, readOptions: overrideOptions, cancellationToken: cancellationToken);
 
         seen.Count.Should().Be(10);
         AssertQueryReadOptions(seen[0]!, defaults);
@@ -128,7 +128,7 @@ public partial class PerformanceRegressionTests
     [Arguments(2)]
     [Arguments(3)]
     [Arguments(4)]
-    public async ValueTask RequireETagBlocksEveryUnconditionalWriteBeforeIo(int mode)
+    public async ValueTask RequireETagBlocksEveryUnconditionalWriteBeforeIo(int mode, CancellationToken cancellationToken)
     {
         var required = new CosmosWriteOptions { RequireETag = true };
         CosmosWriteOptions? methodOptions = mode switch
@@ -148,26 +148,26 @@ public partial class PerformanceRegressionTests
         var container = new Mock<Microsoft.Azure.Cosmos.Container>(MockBehavior.Strict);
         Func<Task>[] operations =
         [
-            () => repo.UpdateItem(document, writeOptions: methodOptions).AsTask(),
-            () => repo.UpdateItem("pk:doc", document, useQueue: true, writeOptions: methodOptions).AsTask(),
-            () => repo.UpdateItems(documents, writeOptions: methodOptions).AsTask(),
-            () => repo.UpdateItemsParallel(documents, 2, writeOptions: methodOptions).AsTask(),
-            () => repo.PatchItem("pk:doc", [], useQueue: true, writeOptions: methodOptions).AsTask(),
-            () => repo.PatchItems(documents, [], writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItem("pk:doc", writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItem("doc", "pk", useQueue: true, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItemWithContainer(container.Object, "doc", "pk", writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteAll(writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItems(query, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItemsParallel(query, 2, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteIds(ids, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteIdsParallel(ids, 2, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteIdsBatched(ids, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteCreatedAtBetween(DateTimeOffset.MinValue, DateTimeOffset.MaxValue, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteAllPaged(writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItemsPaged(sql, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteAllPagedParallel(2, writeOptions: methodOptions).AsTask(),
-            () => repo.DeleteItemsPagedParallel(sql, 2, writeOptions: methodOptions).AsTask()
+            () => repo.UpdateItem(document, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.UpdateItem("pk:doc", document, useQueue: true, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.UpdateItems(documents, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.UpdateItemsParallel(documents, 2, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.PatchItem("pk:doc", [], useQueue: true, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.PatchItems(documents, [], writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItem("pk:doc", writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItem("doc", "pk", useQueue: true, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItemWithContainer(container.Object, "doc", "pk", writeOptions: methodOptions, ct: cancellationToken).AsTask(),
+            () => repo.DeleteAll(writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItems(query, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItemsParallel(query, 2, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteIds(ids, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteIdsParallel(ids, 2, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteIdsBatched(ids, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteCreatedAtBetween(DateTimeOffset.MinValue, DateTimeOffset.MaxValue, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteAllPaged(writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItemsPaged(sql, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteAllPagedParallel(2, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask(),
+            () => repo.DeleteItemsPagedParallel(sql, 2, writeOptions: methodOptions, cancellationToken: cancellationToken).AsTask()
         ];
 
         foreach (Func<Task> operation in operations)
@@ -178,7 +178,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async ValueTask UnconditionalWritesRemainAllowedWhenNeitherLevelRequiresETags()
+    public async ValueTask UnconditionalWritesRemainAllowedWhenNeitherLevelRequiresETags(CancellationToken cancellationToken)
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         var document = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
@@ -193,24 +193,24 @@ public partial class PerformanceRegressionTests
         var repo = CreateRepository(container.Object, writeOptions: new CosmosWriteOptions { RequireETag = false });
         var allow = new CosmosWriteOptions();
 
-        await repo.UpdateItem(document, writeOptions: allow);
-        await repo.UpdateItemsParallel([document], 2, writeOptions: allow);
-        await repo.PatchItem("pk:doc", [], writeOptions: allow);
-        await repo.PatchItems([document], [], writeOptions: allow);
-        await repo.DeleteItem("pk:doc", writeOptions: allow);
-        await repo.DeleteIdsParallel([new() { Id = "doc", PartitionKey = "pk" }], 2, writeOptions: allow);
+        await repo.UpdateItem(document, writeOptions: allow, cancellationToken: cancellationToken);
+        await repo.UpdateItemsParallel([document], 2, writeOptions: allow, cancellationToken: cancellationToken);
+        await repo.PatchItem("pk:doc", [], writeOptions: allow, cancellationToken: cancellationToken);
+        await repo.PatchItems([document], [], writeOptions: allow, cancellationToken: cancellationToken);
+        await repo.DeleteItem("pk:doc", writeOptions: allow, cancellationToken: cancellationToken);
+        await repo.DeleteIdsParallel([new() { Id = "doc", PartitionKey = "pk" }], 2, writeOptions: allow, cancellationToken: cancellationToken);
 
         container.Verify(c => c.ReplaceItemAsync(document, "doc", new PartitionKey("pk"), null, It.IsAny<CancellationToken>()), Times.Exactly(2));
         container.Verify(c => c.PatchItemAsync<TestDocument>("doc", new PartitionKey("pk"), It.IsAny<IReadOnlyList<PatchOperation>>(), null,
             It.IsAny<CancellationToken>()), Times.Exactly(2));
         container.Verify(c => c.DeleteItemStreamAsync("doc", new PartitionKey("pk"), It.Is<ItemRequestOptions>(o => o.IfMatchEtag == null),
             It.IsAny<CancellationToken>()), Times.Exactly(2));
-        Func<Task> strengthened = () => repo.UpdateItem(document, writeOptions: new CosmosWriteOptions { RequireETag = true }).AsTask();
+        Func<Task> strengthened = () => repo.UpdateItem(document, writeOptions: new CosmosWriteOptions { RequireETag = true }, cancellationToken: cancellationToken).AsTask();
         await strengthened.Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Test]
-    public async ValueTask RequiredETagsAllowConditionalWritesAndCreatesAndPropagateConflicts()
+    public async ValueTask RequiredETagsAllowConditionalWritesAndCreatesAndPropagateConflicts(CancellationToken cancellationToken)
     {
         var document = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
@@ -227,15 +227,15 @@ public partial class PerformanceRegressionTests
             It.IsAny<CancellationToken>())).Returns(() => Task.FromResult(new ResponseMessage(HttpStatusCode.NoContent)));
         var repo = CreateRepository(container.Object, writeOptions: new CosmosWriteOptions { RequireETag = true });
 
-        await repo.AddItem(document);
-        await repo.UpdateItemIfMatch(document, "etag");
-        await repo.PatchItemIfMatch("pk:doc", [], "etag");
-        await repo.DeleteItemIfMatch("pk:doc", "etag");
+        await repo.AddItem(document, cancellationToken: cancellationToken);
+        await repo.UpdateItemIfMatch(document, "etag", cancellationToken: cancellationToken);
+        await repo.PatchItemIfMatch("pk:doc", [], "etag", cancellationToken: cancellationToken);
+        await repo.DeleteItemIfMatch("pk:doc", "etag", cancellationToken: cancellationToken);
 
         container.Setup(c => c.ReplaceItemAsync(document, "doc", new PartitionKey("pk"), It.Is<ItemRequestOptions>(o => o.IfMatchEtag == "stale"),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new CosmosException("Conflict", HttpStatusCode.PreconditionFailed, 0, "activity", 0));
-        Func<Task> stale = () => repo.UpdateItemIfMatch(document, "stale").AsTask();
+        Func<Task> stale = () => repo.UpdateItemIfMatch(document, "stale", cancellationToken: cancellationToken).AsTask();
         await stale.Should().ThrowAsync<CosmosException>().Where(e => e.StatusCode == HttpStatusCode.PreconditionFailed);
     }
 }

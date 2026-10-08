@@ -23,7 +23,7 @@ namespace Soenneker.Cosmos.Repository.Tests;
 public partial class PerformanceRegressionTests
 {
     [Test]
-    public async ValueTask ParallelAddsProcessEveryDocumentOnce()
+    public async ValueTask ParallelAddsProcessEveryDocumentOnce(CancellationToken cancellationToken)
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         var seen = new int[32];
@@ -36,32 +36,32 @@ public partial class PerformanceRegressionTests
                 return Mock.Of<ItemResponse<TestDocument>>();
             });
         var documents = Enumerable.Range(0, seen.Length).Select(i => new TestDocument { DocumentId = i.ToString(), PartitionKey = "pk" }).ToList();
-        (await CreateRepository(container.Object).AddItemsParallel(documents, 4)).Should().BeSameAs(documents);
+        (await CreateRepository(container.Object).AddItemsParallel(documents, 4, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
         seen.Should().OnlyContain(count => count == 1);
         for (var i = 0; i < documents.Count; i++)
             documents[i].Id.Should().Be("pk:" + i);
     }
 
     [Test]
-    public async ValueTask EmptyBatchesDoNotResolveAContainer()
+    public async ValueTask EmptyBatchesDoNotResolveAContainer(CancellationToken cancellationToken)
     {
         var util = new Mock<ICosmosContainerUtil>(MockBehavior.Strict);
         var repo = new TestRepository(util.Object);
         List<TestDocument> documents = [];
-        (await repo.AddItems(documents)).Should().BeSameAs(documents);
-        (await repo.AddItemsParallel(documents, 4)).Should().BeSameAs(documents);
-        (await repo.UpdateItems(documents)).Should().BeSameAs(documents);
-        (await repo.UpdateItemsParallel(documents, 4)).Should().BeSameAs(documents);
-        (await repo.PatchItems(documents, [])).Should().BeSameAs(documents);
-        await repo.DeleteIds([]);
-        await repo.DeleteIdsParallel([], 4);
-        Func<Task> invalid = async () => await repo.AddItemsParallel(documents, 0);
+        (await repo.AddItems(documents, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
+        (await repo.AddItemsParallel(documents, 4, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
+        (await repo.UpdateItems(documents, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
+        (await repo.UpdateItemsParallel(documents, 4, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
+        (await repo.PatchItems(documents, [], cancellationToken: cancellationToken)).Should().BeSameAs(documents);
+        await repo.DeleteIds([], cancellationToken: cancellationToken);
+        await repo.DeleteIdsParallel([], 4, cancellationToken: cancellationToken);
+        Func<Task> invalid = async () => await repo.AddItemsParallel(documents, 0, cancellationToken: cancellationToken);
         await invalid.Should().ThrowAsync<ArgumentOutOfRangeException>();
         util.VerifyNoOtherCalls();
     }
 
     [Test]
-    public async ValueTask PatchBatchResolvesContainerOnce()
+    public async ValueTask PatchBatchResolvesContainerOnce(CancellationToken cancellationToken)
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         container.Setup(c => c.PatchItemAsync<TestDocument>(It.IsAny<string>(), It.IsAny<PartitionKey>(),
@@ -70,7 +70,7 @@ public partial class PerformanceRegressionTests
         var util = new Mock<ICosmosContainerUtil>();
         util.Setup(u => u.Get("test", It.IsAny<CancellationToken>())).Returns(new ValueTask<Microsoft.Azure.Cosmos.Container>(container.Object));
         var documents = Enumerable.Range(0, 5).Select(i => new TestDocument { DocumentId = i.ToString(), PartitionKey = "pk" }).ToList();
-        (await new TestRepository(util.Object).PatchItems(documents, [PatchOperation.Set("/updated", true)])).Should().BeSameAs(documents);
+        (await new TestRepository(util.Object).PatchItems(documents, [PatchOperation.Set("/updated", true)], cancellationToken: cancellationToken)).Should().BeSameAs(documents);
         util.Verify(u => u.Get("test", It.IsAny<CancellationToken>()), Times.Once);
         container.Verify(c => c.PatchItemAsync<TestDocument>(It.IsAny<string>(), It.IsAny<PartitionKey>(),
             It.IsAny<IReadOnlyList<PatchOperation>>(), It.IsAny<PatchItemRequestOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(5));
@@ -79,7 +79,7 @@ public partial class PerformanceRegressionTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async ValueTask SingleItemReadsSkipEmptyPages(bool latest)
+    public async ValueTask SingleItemReadsSkipEmptyPages(bool latest, CancellationToken cancellationToken)
     {
         var expected = new TestDocument { DocumentId = "doc", PartitionKey = "pk" };
         var iterator = new TestIterator<TestDocument>([[], [], [expected]]);
@@ -87,26 +87,26 @@ public partial class PerformanceRegressionTests
         container.Setup(c => c.GetItemQueryIterator<TestDocument>(It.IsAny<QueryDefinition>(), It.IsAny<string>(), It.IsAny<QueryRequestOptions>()))
             .Returns(iterator);
         var repo = CreateRepository(container.Object);
-        TestDocument? result = latest ? await repo.GetLatestByPartitionKey("pk") : await repo.GetItemByPartitionKey("pk");
+        TestDocument? result = latest ? await repo.GetLatestByPartitionKey("pk", cancellationToken: cancellationToken) : await repo.GetItemByPartitionKey("pk", cancellationToken: cancellationToken);
         result.Should().BeSameAs(expected);
         iterator.ReadCount.Should().Be(3);
         iterator.Disposed.Should().BeTrue();
     }
 
     [Test]
-    public async ValueTask ExistsSkipsEmptyPagesAndStopsAtFirstResult()
+    public async ValueTask ExistsSkipsEmptyPagesAndStopsAtFirstResult(CancellationToken cancellationToken)
     {
         var iterator = new TestIterator<int>([[], [1], [2]]);
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         container.Setup(c => c.GetItemQueryIterator<int>(It.IsAny<QueryDefinition>(), It.IsAny<string>(), It.IsAny<QueryRequestOptions>()))
             .Returns(iterator);
-        (await CreateRepository(container.Object).ExistsByPartitionKey("pk")).Should().BeTrue();
+        (await CreateRepository(container.Object).ExistsByPartitionKey("pk", cancellationToken: cancellationToken)).Should().BeTrue();
         iterator.ReadCount.Should().Be(2);
         iterator.Disposed.Should().BeTrue();
     }
 
     [Test]
-    public async ValueTask PagedLinqRewritesCallerNullFiltersBeforeCreatingQueryDefinition()
+    public async ValueTask PagedLinqRewritesCallerNullFiltersBeforeCreatingQueryDefinition(CancellationToken cancellationToken)
     {
         using var client = new CosmosClient("https://localhost:8081", Convert.ToBase64String(new byte[64]));
         IQueryable<TestDocument> query = client.GetContainer("test", "test").GetItemLinqQueryable<TestDocument>();
@@ -122,7 +122,7 @@ public partial class PerformanceRegressionTests
                 options.MaxItemCount.Should().Be(25);
             }).Returns(iterator);
 
-        var result = await CreateRepository(container.Object).GetItemsPaged(query, 25, "resume");
+        var result = await CreateRepository(container.Object).GetItemsPaged(query, 25, "resume", cancellationToken: cancellationToken);
 
         result.items.Should().BeEmpty();
         iterator.ReadCount.Should().Be(1);
@@ -140,7 +140,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async ValueTask ReadManyUsesIdAsPartitionAndReusesResponseList()
+    public async ValueTask ReadManyUsesIdAsPartitionAndReusesResponseList(CancellationToken cancellationToken)
     {
         var documents = new List<TestDocument> { new() { DocumentId = "a", PartitionKey = "a" } };
         var response = new TestResponse<TestDocument>(documents);
@@ -152,12 +152,12 @@ public partial class PerformanceRegressionTests
                 pairs[0].Should().Be(("a", new PartitionKey("a")));
                 pairs[1].Should().Be(("b", new PartitionKey("b")));
             }).ReturnsAsync(response);
-        var result = await CreateRepository(container.Object).GetAllByIdNamePairs([new IdNamePair { Id = "a", Name = "A" }, new IdNamePair { Id = "b", Name = "B" }]);
+        var result = await CreateRepository(container.Object).GetAllByIdNamePairs([new IdNamePair { Id = "a", Name = "A" }, new IdNamePair { Id = "b", Name = "B" }], cancellationToken: cancellationToken);
         result.Should().BeSameAs(documents);
     }
 
     [Test]
-    public async ValueTask ParallelUpdatesKeepIndicesAndBoundConcurrency()
+    public async ValueTask ParallelUpdatesKeepIndicesAndBoundConcurrency(CancellationToken cancellationToken)
     {
         var container = new Mock<Microsoft.Azure.Cosmos.Container>();
         int active = 0, peak = 0;
@@ -176,7 +176,7 @@ public partial class PerformanceRegressionTests
             });
         var documents = Enumerable.Range(0, 32).Select(i => new TestDocument { DocumentId = i.ToString(), PartitionKey = "pk" }).ToList();
         var repo = CreateRepository(container.Object);
-        (await repo.UpdateItemsParallel(documents, 4)).Should().BeSameAs(documents);
+        (await repo.UpdateItemsParallel(documents, 4, cancellationToken: cancellationToken)).Should().BeSameAs(documents);
         peak.Should().BeInRange(2, 4);
         for (var i = 0; i < documents.Count; i++)
         {
@@ -184,7 +184,7 @@ public partial class PerformanceRegressionTests
             documents[i].Updated.Should().BeTrue();
         }
         var conditional = documents.Select(d => new CosmosItem<TestDocument>(d, "old-etag")).ToList();
-        (await repo.UpdateItemsParallelIfMatch(conditional, 4)).Should().BeSameAs(conditional);
+        (await repo.UpdateItemsParallelIfMatch(conditional, 4, cancellationToken: cancellationToken)).Should().BeSameAs(conditional);
         conditional.Should().OnlyContain(item => item.ETag == "new-etag");
     }
 

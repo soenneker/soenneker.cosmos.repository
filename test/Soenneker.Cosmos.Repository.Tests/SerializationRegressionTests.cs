@@ -19,7 +19,7 @@ public partial class PerformanceRegressionTests
     [Arguments("add")]
     [Arguments("update")]
     [Arguments("batch")]
-    public async ValueTask QueuedWritesUseCosmosJsonOptionsAndSnapshotDocuments(string operation)
+    public async ValueTask QueuedWritesUseCosmosJsonOptionsAndSnapshotDocuments(string operation, CancellationToken cancellationToken)
     {
         var queue = new Mock<IBackgroundQueue>();
         var util = new Mock<ICosmosContainerUtil>();
@@ -31,9 +31,9 @@ public partial class PerformanceRegressionTests
 
         switch (operation)
         {
-            case "add": await repository.AddItem(document, useQueue: true); break;
-            case "update": await repository.UpdateItem(document, useQueue: true); break;
-            case "batch": await repository.UpdateItems([document], useQueue: true); break;
+            case "add": await repository.AddItem(document, useQueue: true, cancellationToken: cancellationToken); break;
+            case "update": await repository.UpdateItem(document, useQueue: true, cancellationToken: cancellationToken); break;
+            case "batch": await repository.UpdateItems([document], useQueue: true, cancellationToken: cancellationToken); break;
             default: throw new ArgumentOutOfRangeException(nameof(operation));
         }
 
@@ -44,7 +44,7 @@ public partial class PerformanceRegressionTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async ValueTask AuditSerializationSupportsApplicationObjectsAndJsonPayloads(bool useJson)
+    public async ValueTask AuditSerializationSupportsApplicationObjectsAndJsonPayloads(bool useJson, CancellationToken cancellationToken)
     {
         var queue = new Mock<IBackgroundQueue>();
         var util = new Mock<ICosmosContainerUtil>();
@@ -53,9 +53,9 @@ public partial class PerformanceRegressionTests
         var repository = new TestRepository(util.Object, backgroundQueue: queue.Object);
 
         if (useJson)
-            await repository.CreateAuditItem(CrudEventType.Create, "pk:doc", "{\"displayName\":\"Ada\"}");
+            await repository.CreateAuditItem(CrudEventType.Create, "pk:doc", "{\"displayName\":\"Ada\"}", cancellationToken: cancellationToken);
         else
-            await repository.CreateAuditItem(CrudEventType.Create, "pk:doc", new { DisplayName = "Ada" });
+            await repository.CreateAuditItem(CrudEventType.Create, "pk:doc", new { DisplayName = "Ada" }, cancellationToken: cancellationToken);
 
         using JsonDocument json = JsonDocument.Parse(GetQueuedJson(queue));
         json.RootElement.GetProperty("entity").GetProperty("displayName").GetString().Should().Be("Ada");

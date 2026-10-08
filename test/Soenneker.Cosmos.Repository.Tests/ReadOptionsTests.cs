@@ -26,7 +26,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask PointReadsForwardOptionalConsistencyAndCancellation(int mode)
+    public async ValueTask PointReadsForwardOptionalConsistencyAndCancellation(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         using var cts = new CancellationTokenSource();
@@ -71,7 +71,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask QueryReadsForwardOptionsAcrossWrappersAndIdBatches(int mode)
+    public async ValueTask QueryReadsForwardOptionsAcrossWrappersAndIdBatches(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions?>();
@@ -81,15 +81,15 @@ public partial class PerformanceRegressionTests
         CaptureQueryOptions<IdPartitionPair>(container, requests);
         ICosmosRepository<TestDocument> repo = CreateRepository(container.Object);
 
-        await repo.GetAll(readOptions: options);
-        await repo.GetItems("SELECT * FROM c", readOptions: options);
-        await repo.GetItems<TestDocument>("SELECT * FROM c", readOptions: options);
-        await repo.GetItems(new QueryDefinition("SELECT * FROM c"), readOptions: options);
-        await repo.GetItems<TestDocument>(new QueryDefinition("SELECT * FROM c"), readOptions: options);
-        await repo.GetAllByDocumentIds(Enumerable.Range(0, 51).Select(i => i.ToString()).ToList(), readOptions: options);
-        await repo.GetItemsBetween(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow, readOptions: options);
-        await repo.GetAllIds(readOptions: options);
-        await repo.GetAllPartitionKeys(readOptions: options);
+        await repo.GetAll(readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetItems("SELECT * FROM c", readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetItems<TestDocument>("SELECT * FROM c", readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetItems(new QueryDefinition("SELECT * FROM c"), readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetItems<TestDocument>(new QueryDefinition("SELECT * FROM c"), readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetAllByDocumentIds(Enumerable.Range(0, 51).Select(i => i.ToString()).ToList(), readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetItemsBetween(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow, readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetAllIds(readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetAllPartitionKeys(readOptions: options, cancellationToken: cancellationToken);
 
         requests.Count.Should().Be(10);
         if (mode == 1)
@@ -107,7 +107,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask PartitionReadsRetainRoutingAndSingleItemSettings(int mode)
+    public async ValueTask PartitionReadsRetainRoutingAndSingleItemSettings(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions?>();
@@ -116,10 +116,10 @@ public partial class PerformanceRegressionTests
         CaptureQueryOptions<int>(container, requests);
         var repo = CreateRepository(container.Object);
 
-        await repo.GetItemByPartitionKey("pk", readOptions: options);
-        await repo.GetLatestByPartitionKey("pk", readOptions: options);
-        await repo.ExistsByPartitionKey("pk", readOptions: options);
-        await repo.GetAllByPartitionKey("pk", readOptions: options);
+        await repo.GetItemByPartitionKey("pk", readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetLatestByPartitionKey("pk", readOptions: options, cancellationToken: cancellationToken);
+        await repo.ExistsByPartitionKey("pk", readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetAllByPartitionKey("pk", readOptions: options, cancellationToken: cancellationToken);
 
         requests.Count.Should().Be(4);
         foreach (QueryRequestOptions? request in requests)
@@ -139,7 +139,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask ReadManyForwardsOptionalReadSettings(int mode)
+    public async ValueTask ReadManyForwardsOptionalReadSettings(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<ReadManyRequestOptions?>();
@@ -150,8 +150,8 @@ public partial class PerformanceRegressionTests
             .ReturnsAsync(new TestResponse<TestDocument>([]));
         var repo = CreateRepository(container.Object);
 
-        await repo.GetAllByIdNamePairs([new IdNamePair { Id = "doc", Name = "name" }], readOptions: options);
-        await repo.GetAllByIdPartitionPairs([new IdPartitionPair { Id = "doc", PartitionKey = "pk" }], readOptions: options);
+        await repo.GetAllByIdNamePairs([new IdNamePair { Id = "doc", Name = "name" }], readOptions: options, cancellationToken: cancellationToken);
+        await repo.GetAllByIdPartitionPairs([new IdPartitionPair { Id = "doc", PartitionKey = "pk" }], readOptions: options, cancellationToken: cancellationToken);
 
         requests.Count.Should().Be(2);
         foreach (ReadManyRequestOptions? request in requests)
@@ -171,7 +171,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask PagedExecutionCarriesReadOptionsToEveryPage(int mode)
+    public async ValueTask PagedExecutionCarriesReadOptionsToEveryPage(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions>();
@@ -197,7 +197,7 @@ public partial class PerformanceRegressionTests
         {
             callbacks++;
             return ValueTask.CompletedTask;
-        }, readOptions: options);
+        }, readOptions: options, cancellationToken: cancellationToken);
 
         callbacks.Should().Be(2);
         continuations.Should().Equal(new string?[] { null, "next" });
@@ -213,7 +213,7 @@ public partial class PerformanceRegressionTests
     [Arguments(0)]
     [Arguments(1)]
     [Arguments(2)]
-    public async ValueTask PagedLinqBuilderPreservesReadOptionsAndPaging(int mode)
+    public async ValueTask PagedLinqBuilderPreservesReadOptionsAndPaging(int mode, CancellationToken cancellationToken)
     {
         CosmosReadOptions? options = ReadOptions(mode);
         var requests = new List<QueryRequestOptions>();
@@ -223,8 +223,8 @@ public partial class PerformanceRegressionTests
             .Returns(Array.Empty<TestDocument>().AsQueryable().OrderBy(d => d.Id));
         var repo = CreateRepository(container.Object);
 
-        await repo.BuildPagedQueryable(25, "resume", readOptions: options);
-        await repo.BuildPagedQueryable<TestDocument>(25, "resume", readOptions: options);
+        await repo.BuildPagedQueryable(25, "resume", readOptions: options, cancellationToken: cancellationToken);
+        await repo.BuildPagedQueryable<TestDocument>(25, "resume", readOptions: options, cancellationToken: cancellationToken);
 
         requests.Count.Should().Be(2);
         foreach (QueryRequestOptions request in requests)
@@ -235,7 +235,7 @@ public partial class PerformanceRegressionTests
     }
 
     [Test]
-    public async ValueTask MutationRetriesKeepReadOptionsAndETagProtection()
+    public async ValueTask MutationRetriesKeepReadOptionsAndETagProtection(CancellationToken cancellationToken)
     {
         CosmosReadOptions options = ReadOptions(1)!.Value;
         var readRequests = new List<ItemRequestOptions>();
@@ -260,7 +260,7 @@ public partial class PerformanceRegressionTests
             mutations++;
             document.Updated = true;
             return true;
-        });
+        }, cancellationToken: cancellationToken);
 
         mutations.Should().Be(2);
         readRequests.Count.Should().Be(2);
