@@ -49,7 +49,7 @@
         <PackageReference Include="Soenneker.Cosmos.Container" Version="11.0.2605" />
         <PackageReference Include="Soenneker.Cosmos.Linq" Version="11.0.22" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="4.0.194" />
-        <PackageReference Include="Soenneker.Documents.Audit" Version="11.0.2642" />
+        <PackageReference Include="Soenneker.Documents.Audit" Version="11.0.2644" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="11.0.746" />
         <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="11.0.749" />
         <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="4.0.2542" />
