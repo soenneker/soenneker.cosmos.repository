@@ -45,17 +45,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="11.0.392" />
-        <PackageReference Include="Soenneker.Constants.Data" Version="11.0.668" />
+        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="11.0.393" />
+        <PackageReference Include="Soenneker.Constants.Data" Version="11.0.669" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="11.0.2643" />
-        <PackageReference Include="Soenneker.Cosmos.Linq" Version="11.0.28" />
+        <PackageReference Include="Soenneker.Cosmos.Linq" Version="11.0.29" />
         <PackageReference Include="Soenneker.Cosmos.RequestOptions" Version="11.0.202" />
         <PackageReference Include="Soenneker.Documents.Audit" Version="11.0.2666" />
         <PackageReference Include="Soenneker.Dtos.IdNamePair" Version="11.0.750" />
-        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="11.0.756" />
-        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="11.0.2556" />
-        <PackageReference Include="Soenneker.Utils.Json" Version="11.0.2794" />
+        <PackageReference Include="Soenneker.Dtos.IdPartitionPair" Version="11.0.757" />
+        <PackageReference Include="Soenneker.Utils.BackgroundQueue" Version="11.0.2558" />
+        <PackageReference Include="Soenneker.Utils.Json" Version="11.0.2796" />
         <PackageReference Include="Soenneker.Utils.Method" Version="11.0.478" />
-        <PackageReference Include="Soenneker.Utils.UserContext" Version="11.0.1866" />
+        <PackageReference Include="Soenneker.Utils.UserContext" Version="11.0.1867" />
     </ItemGroup>
 </Project>
