@@ -45,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="11.0.393" />
+        <PackageReference Include="Soenneker.ConcurrentProcessing.Executor" Version="11.0.395" />
         <PackageReference Include="Soenneker.Constants.Data" Version="11.0.669" />
         <PackageReference Include="Soenneker.Cosmos.Container" Version="11.0.2643" />
         <PackageReference Include="Soenneker.Cosmos.Linq" Version="11.0.29" />
